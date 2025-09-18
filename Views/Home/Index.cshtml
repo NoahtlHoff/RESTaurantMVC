@@ -1,0 +1,40 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+}
+
+@{
+    Layout = "_Layout";
+}
+
+<section class="py-5 bg-light border-bottom">
+    <div class="container">
+        <div class="row align-items-center g-4">
+            <div class="col-lg-7">
+                <h1 class="display-5 fw-bold mb-3">Välkommen till RESTaurant</h1>
+                <p class="lead mb-4">A place where you could rest, or rant!</p>
+                <div class="d-flex gap-3 flex-wrap">
+                    <a class="btn btn-dark btn-lg" asp-controller="Booking" asp-action="Index">Boka bord</a>
+                    <a class="btn btn-outline-dark btn-lg" asp-controller="Menu" asp-action="Index">Se menyn</a>
+                </div>
+                <p class="text-muted mt-3 mb-0 small">Vegetariska alternativ • Takeaway • Säsongsbaserat</p>
+            </div>
+            <div class="col-lg-5">
+                <div class="ratio ratio-4x3 rounded-4 overflow-hidden shadow-sm">
+                    <img src="~/img/RESTaurant.png" alt="Interiör och rätter på RESTaurant" class="w-100 h-100" style="object-fit:cover" />
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="py-5">
+    <div class="container">
+        <div class="d-flex align-items-end justify-content-between mb-4">
+            <h2 class="h3 fw-bold mb-0">Populära rätter</h2>
+            <a class="link-dark" asp-controller="Menu" asp-action="Index">Visa alla</a>
+        </div>
+
+        <div class="alert alert-info">Rätter laddas in här när API är kopplat.</div>
+    </div>
+</section>
+
