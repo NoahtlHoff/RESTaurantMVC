@@ -1,21 +1,24 @@
-using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using RESTaurantMVC.Models;
+using RESTaurantMVC.Services.ApiClients;
+using System.Diagnostics;
 
 namespace RESTaurantMVC.Controllers
 {
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;
-
-        public HomeController(ILogger<HomeController> logger)
+        private readonly RESTaurantApiClient _api;
+        public HomeController(ILogger<HomeController> logger, RESTaurantApiClient api)
         {
             _logger = logger;
+            _api = api;
         }
 
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
-            return View();
+            var featured = await _api.GetPopularMenuItemsAsync(6);
+            return View(featured);
         }
 
         public IActionResult Privacy()

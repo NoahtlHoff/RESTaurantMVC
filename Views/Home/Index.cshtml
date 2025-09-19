@@ -34,7 +34,36 @@
             <a class="link-dark" asp-controller="Menu" asp-action="Index">Visa alla</a>
         </div>
 
-        <div class="alert alert-info">Rätter laddas in här när API är kopplat.</div>
+        @if (Model is null || Model.Count == 0)
+        {
+            <div class="alert alert-info">Inga rätter kunde laddas just nu.</div>
+        }
+        else
+        {
+            <div class="row g-4">
+                @foreach (var dish in Model)
+                {
+                    <div class="col-12 col-sm-6 col-lg-4">
+                        <div class="card h-100 shadow-sm border-0 rounded-4">
+                            <div class="ratio ratio-4x3 rounded-top-4 overflow-hidden">
+                                <img src="@(string.IsNullOrWhiteSpace(dish.ImageUrl) ? Url.Content("~/img/placeholder.jpg") : dish.ImageUrl)"
+                                     alt="@dish.Name" class="w-100 h-100" style="object-fit:cover" loading="lazy" />
+                            </div>
+                            <div class="card-body">
+                                <div class="d-flex align-items-start justify-content-between gap-3">
+                                    <h3 class="h5 card-title mb-1">@dish.Name</h3>
+                                    <span class="badge text-bg-light border">@dish.Price.ToString("0.##") kr</span>
+                                </div>
+                                @if (!string.IsNullOrWhiteSpace(dish.Description))
+                                {
+                                    <p class="card-text text-muted mt-2">@dish.Description</p>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
     </div>
 </section>
 

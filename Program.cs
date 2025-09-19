@@ -1,7 +1,17 @@
+using RESTaurantMVC.Services.ApiClients;
+
 var builder = WebApplication.CreateBuilder(args);
+
+var apiBase = builder.Configuration["Api:BaseUrl"]!;
+builder.Services.AddHttpClient<RESTaurantApiClient>(c => c.BaseAddress = new Uri(apiBase));
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+
+builder.Services.AddHttpClient<RESTaurantApiClient>(c =>
+{
+    c.BaseAddress = new Uri(builder.Configuration["Api:BaseUrl"]!);
+});
 
 var app = builder.Build();
 
