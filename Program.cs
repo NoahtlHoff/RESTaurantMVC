@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authentication.Cookies;
 using RESTaurantMVC.Services.ApiClients;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -12,6 +13,14 @@ builder.Services.AddHttpClient<RESTaurantApiClient>(c =>
 {
     c.BaseAddress = new Uri(builder.Configuration["Api:BaseUrl"]!);
 });
+
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSession();
+builder.Services.AddHttpContextAccessor();
+builder.Services
+    .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(o => o.LoginPath = "/auth/login");
+builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
@@ -28,6 +37,8 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+app.UseSession();
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllerRoute(
