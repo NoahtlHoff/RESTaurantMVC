@@ -1,0 +1,46 @@
+﻿@* Views/Menu/Index.cshtml *@
+@model List<RESTaurantMVC.Models.MenuItemViewModel>
+@{
+    Layout = "_Layout";
+}
+
+<section class="py-5">
+    <div class="container">
+        <header class="mb-4">
+            <h1 class="h2 fw-bold mb-2">Menyn</h1>
+            <p class="text-muted mb-0">Allt vi serverar just nu.</p>
+        </header>
+
+        @if (Model is null || Model.Count == 0)
+        {
+            <div class="alert alert-info">Menyn är tom just nu. Prova igen senare.</div>
+        }
+        else
+        {
+            <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 g-4">
+                @foreach (var dish in Model)
+                {
+                    <div class="col">
+                        <div class="card h-100 shadow-sm border-0 rounded-4">
+                            <div class="ratio ratio-4x3 rounded-top-4 overflow-hidden">
+                                <img src="@(string.IsNullOrWhiteSpace(dish.ImageUrl) ? Url.Content("~/img/placeholder.jpg") : dish.ImageUrl)"
+                                     alt="@dish.Name"
+                                     class="w-100 h-100" style="object-fit:cover" loading="lazy" />
+                            </div>
+                            <div class="card-body">
+                                <div class="d-flex align-items-start justify-content-between gap-3">
+                                    <h2 class="h5 card-title mb-1">@dish.Name</h2>
+                                    <span class="badge text-bg-light border">@dish.Price.ToString("0.##") kr</span>
+                                </div>
+                                @if (!string.IsNullOrWhiteSpace(dish.Description))
+                                {
+                                    <p class="card-text text-muted mt-2">@dish.Description</p>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</section>

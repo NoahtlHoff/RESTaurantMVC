@@ -8,18 +8,18 @@ namespace RESTaurantMVC.Services.ApiClients
         public RESTaurantApiClient(HttpClient http) => _http = http;
 
         // --- MENU ---
-        public async Task<List<MenuItem>> GetAllMenuItemsAsync()
+        public async Task<List<MenuItemViewModel>> GetAllMenuItemsAsync()
         {
             try
             {
                 var result = await _http.GetAsync("api/menu-items");
                 if (!result.IsSuccessStatusCode) return new();
-                return await result.Content.ReadFromJsonAsync<List<MenuItem>>() ?? new();
+                return await result.Content.ReadFromJsonAsync<List<MenuItemViewModel>>() ?? new();
             }
             catch { return new(); }
         }
 
-        public async Task<List<MenuItem>> GetPopularMenuItemsAsync(int top = 6)
+        public async Task<List<MenuItemViewModel>> GetPopularMenuItemsAsync(int top = 6)
         {
             var all = await GetAllMenuItemsAsync();
             return all.Where(x => x.IsPopular).Take(top).ToList();
