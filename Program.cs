@@ -21,6 +21,14 @@ builder.Services.AddHttpClient<RESTaurantApiClient>(c =>
     c.BaseAddress = new Uri(apiBase!);
 });
 
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSession();
+builder.Services.AddHttpContextAccessor();
+builder.Services
+    .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(o => o.LoginPath = "/auth/login");
+builder.Services.AddAuthorization();
+
 var app = builder.Build();
 
 if (!app.Environment.IsDevelopment())
