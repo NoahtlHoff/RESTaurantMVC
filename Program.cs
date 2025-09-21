@@ -5,29 +5,26 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllersWithViews();
 
-builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-    .AddCookie(o => o.LoginPath = "/auth/login");
-builder.Services.AddAuthorization();
-
-builder.Services.AddSession();
-builder.Services.AddHttpContextAccessor();
-
-var apiBase = builder.Configuration["Api:BaseUrl"];
-if (string.IsNullOrWhiteSpace(apiBase))
-    throw new InvalidOperationException("Missing Api:BaseUrl in appsettings*.json");
-
-builder.Services.AddHttpClient<RESTaurantApiClient>(c =>
-{
-    c.BaseAddress = new Uri(apiBase!);
-});
-
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession();
 builder.Services.AddHttpContextAccessor();
+
 builder.Services
     .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-    .AddCookie(o => o.LoginPath = "/auth/login");
+    .AddCookie(options => options.LoginPath = "/auth/login");
+
 builder.Services.AddAuthorization();
+
+var apiBase = builder.Configuration["Api:BaseUrl"];
+if (string.IsNullOrWhiteSpace(apiBase))
+{
+    throw new InvalidOperationException("Missing Api:BaseUrl in appsettings*.json");
+}
+
+builder.Services.AddHttpClient<RESTaurantApiClient>(client =>
+{
+    client.BaseAddress = new Uri(apiBase);
+});
 
 var app = builder.Build();
 
