@@ -1,0 +1,36 @@
+@{
+    ViewData["Title"] = "Adminpanel";
+}
+
+<h1 class="mb-4">Välkommen till adminpanelen</h1>
+<p class="text-muted">Välj vad du vill hantera för att komma igång.</p>
+
+<div class="row g-3">
+    <div class="col-md-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body d-flex flex-column">
+                <h2 class="h5">Bokningar</h2>
+                <p class="flex-grow-1">Visa, uppdatera eller ta bort bokningar från gäster.</p>
+                <a class="btn btn-primary mt-2" asp-controller="Bookings" asp-action="Index">Hantera bokningar</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body d-flex flex-column">
+                <h2 class="h5">Meny</h2>
+                <p class="flex-grow-1">Lägg till, redigera eller ta bort rätter och drycker.</p>
+                <a class="btn btn-primary mt-2" asp-controller="MenuAdmin" asp-action="Index">Hantera menyn</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body d-flex flex-column">
+                <h2 class="h5">Bord</h2>
+                <p class="flex-grow-1">Administrera restaurangens bord och platser.</p>
+                <a class="btn btn-primary mt-2" asp-controller="Tables" asp-action="Index">Hantera bord</a>
+            </div>
+        </div>
+    </div>
+</div>
