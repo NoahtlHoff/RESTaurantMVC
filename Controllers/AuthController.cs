@@ -1,11 +1,7 @@
-<<<<<<< HEAD
-=======
 using System.Security.Claims;
->>>>>>> e5bd7d9751cb8cc3fe98452283a2ddddc5da4147
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using RESTaurantMVC.Models;
 using RESTaurantMVC.Services.ApiClients;
