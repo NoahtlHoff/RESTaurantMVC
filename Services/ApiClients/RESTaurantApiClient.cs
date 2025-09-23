@@ -1,6 +1,9 @@
+using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
 using RESTaurantMVC.Models;
 
 namespace RESTaurantMVC.Services.ApiClients;
@@ -52,6 +55,44 @@ public class RESTaurantApiClient
         return all.Where(x => x.IsPopular).Take(top).ToList();
     }
 
+    public async Task<MenuItemViewModel> GetMenuItemByIdAsync(int menuItemId)
+    {
+        try
+        {
+            var result = await _http.GetAsync($"api/menu-items/{menuItemId}");
+            if (!result.IsSuccessStatusCode) return new();
+            return await result.Content.ReadFromJsonAsync<MenuItemViewModel>() ?? new();
+        }
+        catch { return new(); }
+    }
+
+    public async Task<int> CreateMenuItemAsync(MenuItemViewModel newMenuItem)
+    {
+        try
+        {
+            var response = await _http.PostAsJsonAsync("api/menu-items", newMenuItem);
+            if (!response.IsSuccessStatusCode) return 0;
+            var created = await response.Content.ReadFromJsonAsync<MenuItemViewModel>();
+            return created?.Id ?? 0;
+        }
+        catch
+        {
+            return 0;
+        }
+    }
+
+    public async Task<HttpStatusCode> DeleteMenuItemAsync(int menuItemId)
+    {
+        try
+        {
+            var response = await _http.DeleteAsync($"api/menu-items/{menuItemId}");
+            return response.StatusCode;
+        }
+        catch
+        {
+            return HttpStatusCode.InternalServerError;
+        }
+    }
     // --- AUTH ---
     public async Task<AuthTokenResponse?> AuthenticateAsync(AdminLoginViewModel model)
     {
