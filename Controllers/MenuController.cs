@@ -10,7 +10,7 @@ namespace RESTaurantMVC.Controllers
         public MenuController(RESTaurantApiClient api) => _api = api;
 
         [HttpGet]
-        public async Task<IActionResult> GetAllMenuItems()
+        public async Task<IActionResult> Index()
         {
             var menuItems = await _api.GetAllMenuItemsAsync();
             ViewData["Title"] = "Menyn – RESTaurant";
