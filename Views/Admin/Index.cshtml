@@ -11,7 +11,7 @@
             <div class="card-body d-flex flex-column">
                 <h2 class="h5">Bokningar</h2>
                 <p class="flex-grow-1">Visa, uppdatera eller ta bort bokningar från gäster.</p>
-                <a class="btn btn-primary mt-2" asp-controller="Bookings" asp-action="Index">Hantera bokningar</a>
+                <a class="btn btn-primary mt-2" asp-controller="AdminBooking" asp-action="Index">Hantera bokningar</a>
             </div>
         </div>
     </div>
@@ -20,7 +20,7 @@
             <div class="card-body d-flex flex-column">
                 <h2 class="h5">Meny</h2>
                 <p class="flex-grow-1">Lägg till, redigera eller ta bort rätter och drycker.</p>
-                <a class="btn btn-primary mt-2" asp-controller="MenuAdmin" asp-action="Index">Hantera menyn</a>
+                <a class="btn btn-primary mt-2" asp-controller="admin" asp-action="menu">Hantera menyn</a>
             </div>
         </div>
     </div>
@@ -29,7 +29,7 @@
             <div class="card-body d-flex flex-column">
                 <h2 class="h5">Bord</h2>
                 <p class="flex-grow-1">Administrera restaurangens bord och platser.</p>
-                <a class="btn btn-primary mt-2" asp-controller="Tables" asp-action="Index">Hantera bord</a>
+                <a class="btn btn-primary mt-2" asp-controller="AdminTable" asp-action="Index">Hantera bord</a>
             </div>
         </div>
     </div>

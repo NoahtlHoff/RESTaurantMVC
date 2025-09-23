@@ -19,7 +19,14 @@ public class AdminController : Controller
     }
 
     [HttpGet]
-    [Route("admin/menu-items")]
+    [Route("menu")]
+    public IActionResult Menu()
+    {
+        return View();
+    }
+
+    [HttpGet]
+    [Route("menu-items")]
     public async Task<IActionResult> GetAllMenuItems()
     {
         var menuItems = await _api.GetAllMenuItemsAsync();
@@ -29,7 +36,7 @@ public class AdminController : Controller
     }
 
     [HttpGet]
-    [Route("admin/menu-items/popular")]
+    [Route("menu-items/popular")]
     public async Task<IActionResult> GetPopularMenuItems()
     {
         var popularMenuItems = await _api.GetPopularMenuItemsAsync();
@@ -39,7 +46,7 @@ public class AdminController : Controller
     }
 
     [HttpGet]
-    [Route("admin/menu-items/{menuItemId:int}")]
+    [Route("menu-items/{menuItemId:int}")]
     public async Task<IActionResult> GetMenuItemById(int menuItemId)
     {
         var menuItem = await _api.GetMenuItemByIdAsync(menuItemId);
@@ -54,7 +61,7 @@ public class AdminController : Controller
     }
 
     [HttpDelete]
-    [Route("admin/menu-items/{menuItemId:int}")]
+    [Route("menu-items/{menuItemId:int}")]
     public async Task<IActionResult> DeleteMenuItem(int menuItemId)
     {
         var result = await _api.DeleteMenuItemAsync(menuItemId);
