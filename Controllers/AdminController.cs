@@ -3,10 +3,9 @@ using Microsoft.AspNetCore.Mvc;
 using RESTaurantMVC.Models;
 using RESTaurantMVC.Services.ApiClients;
 
-namespace RESTaurantMVC.Areas.Admin.Controllers;
+namespace RESTaurantMVC.Controllers;
 
 [Authorize]
-[Area("admin")]
 [Route("admin")]
 public class AdminController : Controller
 {
@@ -15,6 +14,12 @@ public class AdminController : Controller
 
     [HttpGet]
     public IActionResult Index()
+    {
+        return View();
+    }
+
+    [HttpGet]
+    public IActionResult Menu()
     {
         return View();
     }
