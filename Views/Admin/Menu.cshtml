@@ -11,7 +11,7 @@
             <div class="card-body d-flex flex-column">
                 <h2 class="h5">Skapa rätt</h2>
                 <p class="flex-grow-1">Lägg till en ny rätt eller dryck till menyn.</p>
-                <a class="btn btn-success mt-2" asp-controller="admin" asp-action="create">Skapa rätt</a>
+                <a class="btn btn-success mt-2" asp-controller="admin" asp-action="menu/create">Skapa rätt</a>
             </div>
         </div>
     </div>
@@ -20,7 +20,7 @@
             <div class="card-body d-flex flex-column">
                 <h2 class="h5">Redigera rätt</h2>
                 <p class="flex-grow-1">Uppdatera information om befintliga rätter eller drycker.</p>
-                <a class="btn btn-warning mt-2" asp-controller="admin" asp-action="edit">Redigera rätt</a>
+                <a class="btn btn-warning mt-2" asp-controller="admin" asp-action="menu/update">Redigera rätt</a>
             </div>
         </div>
     </div>
@@ -29,7 +29,7 @@
             <div class="card-body d-flex flex-column">
                 <h2 class="h5">Ta bort rätt</h2>
                 <p class="flex-grow-1">Ta bort en rätt eller dryck från menyn.</p>
-                <a class="btn btn-danger mt-2" asp-controller="admin" asp-action="delete">Ta bort rätt</a>
+                <a class="btn btn-danger mt-2" asp-controller="admin" asp-action="menu/delete">Ta bort rätt</a>
             </div>
         </div>
     </div>
@@ -38,7 +38,7 @@
             <div class="card-body d-flex flex-column">
                 <h2 class="h5">Hämta alla rätter</h2>
                 <p class="flex-grow-1">Hämta alla rätter från menyn.</p>
-                <a class="btn btn-danger mt-2" asp-controller="admin" asp-action="menu-items">Hämta alla rätter</a>
+                <a class="btn btn-danger mt-2" asp-controller="admin" asp-action="GetAllMenuItems">Hämta alla rätter</a>
             </div>
         </div>
     </div>
