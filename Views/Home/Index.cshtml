@@ -14,7 +14,7 @@
                 <p class="lead mb-4">A place where you could rest, or rant!</p>
                 <div class="d-flex gap-3 flex-wrap">
                     <a class="btn btn-dark btn-lg" asp-controller="Booking" asp-action="Index">Boka bord</a>
-                    <a class="btn btn-outline-dark btn-lg" asp-controller="Menu" asp-action="Index">Se menyn</a>
+                    <a class="btn btn-outline-dark btn-lg" asp-controller="" asp-action="Menu">Se menyn</a>
                 </div>
                 <p class="text-muted mt-3 mb-0 small">Vegetariska alternativ • Takeaway • Säsongsbaserat</p>
             </div>
@@ -31,7 +31,7 @@
     <div class="container">
         <div class="d-flex align-items-end justify-content-between mb-4">
             <h2 class="h3 fw-bold mb-0">Populära rätter</h2>
-            <a class="link-dark" asp-controller="Menu" asp-action="Index">Visa alla</a>
+            <a class="link-dark" asp-controller="" asp-action="Menu">Visa alla</a>
         </div>
 
         @if (Model is null || Model.Count == 0)

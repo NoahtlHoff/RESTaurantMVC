@@ -21,9 +21,13 @@ namespace RESTaurantMVC.Controllers
             return View(featured);
         }
 
-        public IActionResult Privacy()
+        [HttpGet]
+        public async Task<IActionResult> Menu()
         {
-            return View();
+            var menuItems = await _api.GetAllMenuItemsAsync();
+            ViewData["Title"] = "Menyn – RESTaurant";
+            ViewData["Description"] = "Se hela menyn: namn, pris, beskrivning och bilder.";
+            return View(menuItems);
         }
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]

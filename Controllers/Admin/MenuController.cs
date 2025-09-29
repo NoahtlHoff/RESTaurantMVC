@@ -2,7 +2,7 @@
 using RESTaurantMVC.Models;
 using RESTaurantMVC.Services.ApiClients;
 
-namespace RESTaurantMVC.Areas.Admin.Controllers
+namespace RESTaurantMVC.Controllers.Admin
 {
     public class MenuController : Controller
     {
