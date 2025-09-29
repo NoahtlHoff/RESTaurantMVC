@@ -21,7 +21,7 @@ namespace RESTaurantMVC.Controllers
             return View(featured);
         }
 
-        [HttpGet]
+        [HttpGet("Menu")]
         public async Task<IActionResult> Menu()
         {
             var menuItems = await _api.GetAllMenuItemsAsync();
