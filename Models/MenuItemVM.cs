@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace RESTaurantMVC.Models
 {
-    public class MenuItemViewModel
+    public class MenuItemVM
     {
         public int Id { get; set; }
 

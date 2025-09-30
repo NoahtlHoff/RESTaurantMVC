@@ -37,42 +37,42 @@ public class RESTaurantApiClient
     }
 
     // --- MENU ---
-    public async Task<List<MenuItemViewModel>> GetAllMenuItemsAsync()
+    public async Task<List<MenuItemVM>> GetAllMenuItemsAsync()
     {
         ApplyBearerFromSession();
         try
         {
             var result = await _http.GetAsync("api/menu-items");
             if (!result.IsSuccessStatusCode) return new();
-            return await result.Content.ReadFromJsonAsync<List<MenuItemViewModel>>() ?? new();
+            return await result.Content.ReadFromJsonAsync<List<MenuItemVM>>() ?? new();
         }
         catch { return new(); }
     }
 
-    public async Task<List<MenuItemViewModel>> GetPopularMenuItemsAsync(int top = 6)
+    public async Task<List<MenuItemVM>> GetPopularMenuItemsAsync(int top = 6)
     {
         var all = await GetAllMenuItemsAsync();
         return all.Where(x => x.IsPopular).Take(top).ToList();
     }
 
-    public async Task<MenuItemViewModel> GetMenuItemByIdAsync(int menuItemId)
+    public async Task<MenuItemVM> GetMenuItemByIdAsync(int menuItemId)
     {
         try
         {
             var result = await _http.GetAsync($"api/menu-items/{menuItemId}");
             if (!result.IsSuccessStatusCode) return new();
-            return await result.Content.ReadFromJsonAsync<MenuItemViewModel>() ?? new();
+            return await result.Content.ReadFromJsonAsync<MenuItemVM>() ?? new();
         }
         catch { return new(); }
     }
 
-    public async Task<int> CreateMenuItemAsync(MenuItemViewModel newMenuItem)
+    public async Task<int> CreateMenuItemAsync(MenuItemVM newMenuItem)
     {
         try
         {
             var response = await _http.PostAsJsonAsync("api/menu-items", newMenuItem);
             if (!response.IsSuccessStatusCode) return 0;
-            var created = await response.Content.ReadFromJsonAsync<MenuItemViewModel>();
+            var created = await response.Content.ReadFromJsonAsync<MenuItemVM>();
             return created?.Id ?? 0;
         }
         catch

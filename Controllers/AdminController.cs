@@ -13,7 +13,7 @@ public class AdminController : Controller
     public AdminController(RESTaurantApiClient api) => _api = api;
 
     [HttpGet]
-    public IActionResult Admin()
+    public IActionResult Index()
     {
         return View();
     }
@@ -52,7 +52,7 @@ public class AdminController : Controller
     }
 
     [HttpPost]
-    public async Task<IActionResult> CreateMenuItem(MenuItemViewModel newMenuItem)
+    public async Task<IActionResult> CreateMenuItem(MenuItemVM newMenuItem)
     {
         var id = await _api.CreateMenuItemAsync(newMenuItem);
         return CreatedAtAction(nameof(GetMenuItemById), new { menuItemId = id });
