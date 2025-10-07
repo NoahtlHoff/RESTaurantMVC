@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using RESTaurantMVC.Services.ApiClients;
 using RESTaurantMVC.Models;
+using RESTaurantMVC.Services.ApiClients;
 
 namespace RESTaurantMVC.Controllers
 {
@@ -9,111 +9,262 @@ namespace RESTaurantMVC.Controllers
     [Route("admin")]
     public class AdminController : Controller
     {
-        private readonly RESTaurantApiClient _api;
-        public AdminController(RESTaurantApiClient api) => _api = api;
+        private readonly RESTaurantApiClient _apiClient;
+        private readonly ILogger<AdminController> _logger;
 
-        // Dashboard
-        [HttpGet("")]
-        [HttpGet("index")]
-        public IActionResult Index()
+        public AdminController(RESTaurantApiClient apiClient, ILogger<AdminController> logger)
         {
-            return View();
+            _apiClient = apiClient;
+            _logger = logger;
         }
 
-        // API Endpoints för JavaScript
+        // ===== DASHBOARD =====
+        [HttpGet("")]
+        [HttpGet("index")]
+        public async Task<IActionResult> Index()
+        {
+            try
+            {
+                var bookings = await _apiClient.GetAllBookingsAsync();
+                return View(bookings ?? new List<BookingVM>());
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading admin dashboard");
+                return View(new List<BookingVM>());
+            }
+        }
+
+        // ===== BOOKINGS API (för AJAX-anrop från Index-vyn) =====
         [HttpGet("api/bookings")]
         public async Task<IActionResult> GetBookings()
         {
-            var bookings = await _api.GetAllBookingsAsync();
-            return Ok(bookings);
+            try
+            {
+                var bookings = await _apiClient.GetAllBookingsAsync();
+                if (bookings == null)
+                {
+                    _logger.LogWarning("GetAllBookingsAsync returned null");
+                    return Ok(new List<BookingVM>());
+                }
+
+                return Ok(bookings);
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError(ex, "HTTP error when fetching bookings from API");
+                return StatusCode(503, new { error = "API är inte tillgänglig", details = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error when fetching bookings");
+                return StatusCode(500, new { error = "Ett oväntat fel uppstod", details = ex.Message });
+            }
         }
 
         [HttpGet("api/bookings/{id}")]
         public async Task<IActionResult> GetBooking(int id)
         {
-            var booking = await _api.GetBookingByIdAsync(id);
-            if (booking == null) return NotFound();
-            return Ok(booking);
+            try
+            {
+                var booking = await _apiClient.GetBookingByIdAsync(id);
+                if (booking == null)
+                    return NotFound(new { error = "Bokning hittades inte" });
+
+                return Ok(booking);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching booking {BookingId}", id);
+                return StatusCode(500, new { error = ex.Message });
+            }
         }
 
         [HttpPost("api/bookings")]
         public async Task<IActionResult> CreateBooking([FromBody] BookingVM booking)
         {
-            var id = await _api.CreateBookingAsync(booking);
-            if (id == 0) return BadRequest();
-            return Ok(new { id });
+            try
+            {
+                if (!ModelState.IsValid)
+                    return BadRequest(ModelState);
+
+                var success = await _apiClient.CreateBookingAsync(booking);
+                if (!success)
+                    return StatusCode(500, new { error = "Kunde inte skapa bokning" });
+
+                return Ok(new { message = "Bokning skapad" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating booking");
+                return StatusCode(500, new { error = ex.Message });
+            }
         }
 
         [HttpPut("api/bookings/{id}")]
         public async Task<IActionResult> UpdateBooking(int id, [FromBody] BookingVM booking)
         {
-            var success = await _api.UpdateBookingAsync(id, booking);
-            if (!success) return NotFound();
-            return NoContent();
+            try
+            {
+                if (!ModelState.IsValid)
+                    return BadRequest(ModelState);
+
+                var success = await _apiClient.UpdateBookingAsync(id, booking);
+                if (!success)
+                    return NotFound(new { error = "Bokning hittades inte" });
+
+                return Ok(new { message = "Bokning uppdaterad" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating booking {BookingId}", id);
+                return StatusCode(500, new { error = ex.Message });
+            }
         }
 
         [HttpDelete("api/bookings/{id}")]
         public async Task<IActionResult> DeleteBooking(int id)
         {
-            var success = await _api.DeleteBookingAsync(id);
-            if (!success) return NotFound();
-            return NoContent();
+            try
+            {
+                var success = await _apiClient.DeleteBookingAsync(id);
+                if (!success)
+                    return NotFound(new { error = "Bokning hittades inte" });
+
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting booking {BookingId}", id);
+                return StatusCode(500, new { error = ex.Message });
+            }
         }
 
-        // Menu
+        // ===== MENU MANAGEMENT =====
         [HttpGet("menu")]
-        public IActionResult Menu()
+        public async Task<IActionResult> Menu()
         {
-            return View();
+            try
+            {
+                var items = await _apiClient.GetAllMenuItemsAsync();
+                return View(items ?? new List<MenuItemVM>());
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading menu items");
+                return View(new List<MenuItemVM>());
+            }
         }
 
         [HttpGet("menu/create")]
         public IActionResult CreateMenuItem()
         {
-            return View();
+            return View(new MenuItemVM());
         }
 
-        [HttpGet("menu/edit")]
-        public IActionResult EditMenuItem()
+        [HttpPost("menu/create")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreateMenuItem(MenuItemVM item)
         {
-            return View();
+            if (!ModelState.IsValid)
+                return View(item);
+
+            try
+            {
+                var success = await _apiClient.CreateMenuItemAsync(item);
+                if (!success)
+                {
+                    ModelState.AddModelError("", "Kunde inte skapa rätten.");
+                    return View(item);
+                }
+
+                return RedirectToAction(nameof(Menu));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating menu item");
+                ModelState.AddModelError("", $"Ett fel uppstod: {ex.Message}");
+                return View(item);
+            }
         }
 
-        [HttpGet("menu/delete")]
-        public IActionResult DeleteMenuItem()
+        [HttpGet("menu/edit/{id}")]
+        public async Task<IActionResult> EditMenuItem(int id)
         {
-            return View();
+            try
+            {
+                var item = await _apiClient.GetMenuItemByIdAsync(id);
+                if (item == null)
+                    return NotFound();
+
+                return View(item);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading menu item {MenuItemId}", id);
+                return RedirectToAction(nameof(Menu));
+            }
         }
 
-        // Tables
+        [HttpPost("menu/edit/{id}")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditMenuItem(int id, MenuItemVM item)
+        {
+            if (!ModelState.IsValid)
+                return View(item);
+
+            try
+            {
+                var success = await _apiClient.UpdateMenuItemAsync(id, item);
+                if (!success)
+                {
+                    ModelState.AddModelError("", "Kunde inte uppdatera rätten.");
+                    return View(item);
+                }
+
+                return RedirectToAction(nameof(Menu));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating menu item {MenuItemId}", id);
+                ModelState.AddModelError("", $"Ett fel uppstod: {ex.Message}");
+                return View(item);
+            }
+        }
+
+        [HttpPost("menu/delete/{id}")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteMenuItem(int id)
+        {
+            try
+            {
+                var success = await _apiClient.DeleteMenuItemAsync(id);
+                if (!success)
+                    return NotFound();
+
+                return RedirectToAction(nameof(Menu));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting menu item {MenuItemId}", id);
+                return RedirectToAction(nameof(Menu));
+            }
+        }
+
+        // ===== TABLES MANAGEMENT =====
         [HttpGet("tables")]
-        public IActionResult Tables()
+        public async Task<IActionResult> Tables()
         {
-            return View();
-        }
-
-        [HttpGet("table/create")]
-        public IActionResult CreateTable()
-        {
-            return View();
-        }
-
-        [HttpGet("table/edit")]
-        public IActionResult EditTable()
-        {
-            return View();
-        }
-
-        [HttpGet("table/delete")]
-        public IActionResult DeleteTable()
-        {
-            return View();
-        }
-
-        [HttpGet("table")]
-        public IActionResult Table()
-        {
-            return View();
+            try
+            {
+                var tables = await _apiClient.GetAllTablesAsync();
+                return View(tables ?? new List<TableVM>());
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading tables");
+                return View(new List<TableVM>());
+            }
         }
     }
 }

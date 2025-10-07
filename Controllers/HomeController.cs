@@ -1,39 +1,44 @@
+using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using RESTaurantMVC.Models;
 using RESTaurantMVC.Services.ApiClients;
-using System.Diagnostics;
 
 namespace RESTaurantMVC.Controllers
 {
     public class HomeController : Controller
     {
-        private readonly ILogger<HomeController> _logger;
-        private readonly RESTaurantApiClient _api;
-        public HomeController(ILogger<HomeController> logger, RESTaurantApiClient api)
+        private readonly RESTaurantApiClient _apiClient;
+
+        public HomeController(RESTaurantApiClient apiClient)
         {
-            _logger = logger;
-            _api = api;
+            _apiClient = apiClient;
         }
 
         public async Task<IActionResult> Index()
         {
-            var featured = await _api.GetPopularMenuItemsAsync(6);
-            return View(featured);
+            // Hämta populära rätter från API
+            var allItems = await _apiClient.GetAllMenuItemsAsync();
+            var popularItems = allItems?
+                .Where(item => item.IsPopular)
+                .Take(6)
+                .ToList() ?? new List<MenuItemVM>();
+
+            return View(popularItems);
         }
 
-        [HttpGet("Menu")]
         public async Task<IActionResult> Menu()
         {
-            var menuItems = await _api.GetAllMenuItemsAsync();
-            ViewData["Title"] = "Menyn – RESTaurant";
-            ViewData["Description"] = "Se hela menyn: namn, pris, beskrivning och bilder.";
-            return View(menuItems);
+            var items = await _apiClient.GetAllMenuItemsAsync();
+            return View(items ?? new List<MenuItemVM>());
         }
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
         {
-            return View(new ErrorVM { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+            return View(new ErrorVM
+            {
+                RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier
+            });
         }
     }
 }

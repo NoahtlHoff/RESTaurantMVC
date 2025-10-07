@@ -1,45 +1,87 @@
+@model List<RESTaurantMVC.Models.MenuItemVM>
 @{
-    ViewData["Title"] = "Menu";
+    ViewData["Title"] = "Hantera Meny";
 }
 
-<h1 class="mb-4">Välkommen till adminpanelen - Menyhantering</h1>
-<p class="text-muted">Hantera menyns rätter och drycker nedan</p>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Hantera Meny</h1>
+    <a asp-action="CreateMenuItem" class="btn btn-success">
+        <i class="bi bi-plus-circle"></i> Lägg till rätt
+    </a>
+</div>
 
-<div class="row g-3">
-    <div class="col-md-4">
-        <div class="card h-100 shadow-sm">
-            <div class="card-body d-flex flex-column">
-                <h2 class="h5">Skapa rätt</h2>
-                <p class="flex-grow-1">Lägg till en ny rätt eller dryck till menyn.</p>
-                <a class="btn btn-success mt-2" asp-controller="admin" asp-action="menu/create">Skapa rätt</a>
-            </div>
-        </div>
+@if (Model == null || !Model.Any())
+{
+    <div class="alert alert-info">
+        Inga rätter finns i menyn än. <a asp-action="CreateMenuItem">Lägg till en rätt</a>
     </div>
-    <div class="col-md-4">
-        <div class="card h-100 shadow-sm">
-            <div class="card-body d-flex flex-column">
-                <h2 class="h5">Redigera rätt</h2>
-                <p class="flex-grow-1">Uppdatera information om befintliga rätter eller drycker.</p>
-                <a class="btn btn-warning mt-2" asp-controller="admin" asp-action="menu/update">Redigera rätt</a>
-            </div>
-        </div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Bild</th>
+                    <th>Namn</th>
+                    <th>Pris</th>
+                    <th>Beskrivning</th>
+                    <th>Populär</th>
+                    <th>Åtgärder</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>
+                            @if (!string.IsNullOrWhiteSpace(item.ImageUrl))
+                            {
+                                <img src="@item.ImageUrl" alt="@item.Name" 
+                                     style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px;" />
+                            }
+                            else
+                            {
+                                <div style="width: 60px; height: 60px; background: #e9ecef; border-radius: 4px;"></div>
+                            }
+                        </td>
+                        <td>@item.Name</td>
+                        <td>@item.Price.ToString("0.##") kr</td>
+                        <td>
+                            @if (!string.IsNullOrWhiteSpace(item.Description))
+                            {
+                                <span>@(item.Description.Length > 50 ? item.Description.Substring(0, 50) + "..." : item.Description)</span>
+                            }
+                        </td>
+                        <td>
+                            @if (item.IsPopular)
+                            {
+                                <span class="badge bg-success">Ja</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">Nej</span>
+                            }
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a asp-action="EditMenuItem" asp-route-id="@item.Id" 
+                                   class="btn btn-outline-primary">Redigera</a>
+                                <form asp-action="DeleteMenuItem" asp-route-id="@item.Id" 
+                                      method="post" class="d-inline"
+                                      onsubmit="return confirm('Är du säker på att du vill ta bort @item.Name?');">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-outline-danger">Ta bort</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
     </div>
-    <div class="col-md-4">
-        <div class="card h-100 shadow-sm">
-            <div class="card-body d-flex flex-column">
-                <h2 class="h5">Ta bort rätt</h2>
-                <p class="flex-grow-1">Ta bort en rätt eller dryck från menyn.</p>
-                <a class="btn btn-danger mt-2" asp-controller="admin" asp-action="menu/delete">Ta bort rätt</a>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card h-100 shadow-sm">
-            <div class="card-body d-flex flex-column">
-                <h2 class="h5">Hämta alla rätter</h2>
-                <p class="flex-grow-1">Hämta alla rätter från menyn.</p>
-                <a class="btn btn-danger mt-2" asp-controller="admin" asp-action="GetAllMenuItems">Hämta alla rätter</a>
-            </div>
-        </div>
-    </div>
+}
+
+<div class="mt-3">
+    <a asp-action="Index" class="btn btn-secondary">Tillbaka till Dashboard</a>
 </div>

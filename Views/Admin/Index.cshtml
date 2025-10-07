@@ -37,6 +37,8 @@
             </div>
         </form>
 
+        <div id="error-message" class="alert alert-danger d-none"></div>
+
         <table class="table">
             <thead>
                 <tr>
@@ -70,7 +72,6 @@
             <div class="card-body">
                 <h5>Bord</h5>
                 <a class="btn btn-primary btn-sm me-2" asp-action="Tables">Visa</a>
-                <a class="btn btn-success btn-sm" asp-action="CreateTable">Lägg till</a>
             </div>
         </div>
     </div>
@@ -98,69 +99,127 @@
             document.getElementById('size').value = 2;
         }
 
+        function showError(message) {
+            const errorDiv = document.getElementById('error-message');
+            errorDiv.textContent = message;
+            errorDiv.classList.remove('d-none');
+            setTimeout(() => errorDiv.classList.add('d-none'), 5000);
+        }
+
         async function load() {
-            const res = await fetch('/admin/api/bookings');
-            bookings = await res.json();
             const tbody = document.getElementById('tbody');
 
-            if (!bookings?.length) {
-                tbody.innerHTML = '<tr><td colspan="6" class="text-center">Inga bokningar</td></tr>';
-                return;
-            }
+            try {
+                const res = await fetch('/admin/api/bookings');
 
-            tbody.innerHTML = bookings.map(b => `
-                <tr>
-                    <td>${new Date(b.date).toLocaleDateString('sv')} ${b.time?.slice(0,5)}</td>
-                    <td>${b.guestName}</td>
-                    <td>${b.partySize}</td>
-                    <td>${b.phone || '-'}</td>
-                    <td>${b.tableName || '-'}</td>
-                    <td>
-                        <button class="btn btn-sm btn-outline-primary" onclick="edit(${b.id})">Ändra</button>
-                        <button class="btn btn-sm btn-outline-danger" onclick="del(${b.id})">Ta bort</button>
-                    </td>
-                </tr>
-            `).join('');
+                if (!res.ok) {
+                    let errorMsg = `Fel vid hämtning (${res.status})`;
+                    try {
+                        const errorData = await res.json();
+                        errorMsg = errorData.error || errorMsg;
+                    } catch (e) {
+                        // Om response inte är JSON
+                        const text = await res.text();
+                        console.error('Server error:', text);
+                    }
+                    throw new Error(errorMsg);
+                }
+
+                bookings = await res.json();
+
+                if (!bookings || bookings.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="text-center">Inga bokningar</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = bookings.map(b => `
+                    <tr>
+                        <td>${b.date} ${b.time?.slice(0,5) || ''}</td>
+                        <td>${b.guestName || '-'}</td>
+                        <td>${b.partySize || '-'}</td>
+                        <td>${b.phone || '-'}</td>
+                        <td>${b.tableName || '-'}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary" onclick="edit(${b.id})">Ändra</button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="del(${b.id})">Ta bort</button>
+                        </td>
+                    </tr>
+                `).join('');
+
+            } catch (error) {
+                console.error('Error loading bookings:', error);
+                showError('Kunde inte ladda bokningar: ' + error.message);
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">Kunde inte ladda bokningar. Kontrollera att API:et körs.</td></tr>';
+            }
         }
 
         function edit(id) {
             const b = bookings.find(x => x.id === id);
+            if (!b) return;
+
             document.getElementById('id').value = b.id;
-            document.getElementById('name').value = b.guestName;
-            document.getElementById('date').value = b.date?.slice(0,10);
-            document.getElementById('time').value = b.time?.slice(0,5);
-            document.getElementById('size').value = b.partySize;
+            document.getElementById('name').value = b.guestName || '';
+            document.getElementById('date').value = b.date?.slice(0,10) || '';
+            document.getElementById('time').value = b.time?.slice(0,5) || '';
+            document.getElementById('size').value = b.partySize || 2;
             document.getElementById('phone').value = b.phone || '';
             document.getElementById('table').value = b.tableName || '';
         }
 
         async function del(id) {
             if (!confirm('Ta bort?')) return;
-            await fetch(`/admin/api/bookings/${id}`, { method: 'DELETE' });
-            load();
+
+            try {
+                const res = await fetch(`/admin/api/bookings/${id}`, { method: 'DELETE' });
+
+                if (!res.ok) {
+                    const errorData = await res.json().catch(() => ({}));
+                    throw new Error(errorData.error || 'Kunde inte ta bort bokning');
+                }
+
+                await load();
+            } catch (error) {
+                console.error('Error deleting booking:', error);
+                showError('Kunde inte ta bort bokning: ' + error.message);
+            }
         }
 
         async function save(e) {
             e.preventDefault();
             const id = document.getElementById('id').value;
 
-            await fetch(id ? `/admin/api/bookings/${id}` : '/admin/api/bookings', {
-                method: id ? 'PUT' : 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    guestName: document.getElementById('name').value,
-                    date: document.getElementById('date').value,
-                    time: document.getElementById('time').value,
-                    partySize: parseInt(document.getElementById('size').value),
-                    tableName: document.getElementById('table').value,
-                    phone: document.getElementById('phone').value
-                })
-            });
+            const bookingData = {
+                guestName: document.getElementById('name').value,
+                date: document.getElementById('date').value,
+                time: document.getElementById('time').value,
+                partySize: parseInt(document.getElementById('size').value),
+                tableName: document.getElementById('table').value,
+                phone: document.getElementById('phone').value
+            };
 
-            document.getElementById('form').reset();
-            document.getElementById('id').value = '';
-            setDefaults();
-            load();
+            try {
+                const res = await fetch(
+                    id ? `/admin/api/bookings/${id}` : '/admin/api/bookings',
+                    {
+                        method: id ? 'PUT' : 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(bookingData)
+                    }
+                );
+
+                if (!res.ok) {
+                    const errorData = await res.json().catch(() => ({}));
+                    throw new Error(errorData.error || 'Kunde inte spara bokning');
+                }
+
+                document.getElementById('form').reset();
+                document.getElementById('id').value = '';
+                setDefaults();
+                await load();
+            } catch (error) {
+                console.error('Error saving booking:', error);
+                showError('Kunde inte spara bokning: ' + error.message);
+            }
         }
     </script>
 }
