@@ -1,9 +1,15 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using RESTaurantMVC.Services.ApiClients;
+using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllersWithViews();
+builder.Services.AddControllersWithViews()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+        options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+    });
 
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession();
