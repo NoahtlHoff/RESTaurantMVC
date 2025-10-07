@@ -266,5 +266,99 @@ namespace RESTaurantMVC.Controllers
                 return View(new List<TableVM>());
             }
         }
+        [HttpGet("tables/create")]
+        public IActionResult CreateTable()
+        {
+            return View(new TableVM());
+        }
+
+        [HttpPost("tables/create")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreateTable(TableVM table)
+        {
+            if (!ModelState.IsValid)
+                return View(table);
+
+            try
+            {
+                var success = await _apiClient.CreateTableAsync(table);
+                if (!success)
+                {
+                    ModelState.AddModelError("", "Kunde inte skapa bordet.");
+                    return View(table);
+                }
+
+                return RedirectToAction(nameof(Tables));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating table");
+                ModelState.AddModelError("", $"Ett fel uppstod: {ex.Message}");
+                return View(table);
+            }
+        }
+
+        [HttpGet("tables/edit/{id}")]
+        public async Task<IActionResult> EditTable(int id)
+        {
+            try
+            {
+                var table = await _apiClient.GetTableByIdAsync(id);
+                if (table == null)
+                    return NotFound();
+
+                return View(table);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading table {TableId}", id);
+                return RedirectToAction(nameof(Tables));
+            }
+        }
+
+        [HttpPost("tables/edit/{id}")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditTable(int id, TableVM table)
+        {
+            if (!ModelState.IsValid)
+                return View(table);
+
+            try
+            {
+                var success = await _apiClient.UpdateTableAsync(id, table);
+                if (!success)
+                {
+                    ModelState.AddModelError("", "Kunde inte uppdatera bordet.");
+                    return View(table);
+                }
+
+                return RedirectToAction(nameof(Tables));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating table {TableId}", id);
+                ModelState.AddModelError("", $"Ett fel uppstod: {ex.Message}");
+                return View(table);
+            }
+        }
+
+        [HttpPost("tables/delete/{id}")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteTable(int id)
+        {
+            try
+            {
+                var success = await _apiClient.DeleteTableAsync(id);
+                if (!success)
+                    return NotFound();
+
+                return RedirectToAction(nameof(Tables));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting table {TableId}", id);
+                return RedirectToAction(nameof(Tables));
+            }
+        }
     }
 }

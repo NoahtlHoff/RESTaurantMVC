@@ -1,0 +1,59 @@
+﻿@model List<RESTaurantMVC.Models.TableVM>
+@{
+    ViewData["Title"] = "Hantera Bord";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Hantera Bord</h1>
+    <a asp-action="CreateTable" class="btn btn-success">
+        <i class="bi bi-plus-circle"></i> Lägg till bord
+    </a>
+</div>
+
+@if (Model == null || !Model.Any())
+{
+    <div class="alert alert-info">
+        Inga bord finns registrerade ännu. <a asp-action="CreateTable">Lägg till ett bord</a>
+    </div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Nr</th>
+                    <th>Kapacitet</th>
+                    <th>Åtgärder</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var table in Model)
+                {
+                    <tr>
+                        <td>@table.Number</td>
+                        <td>@table.Capacity personer</td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a asp-action="EditTable" asp-route-id="@table.Id" class="btn btn-outline-primary">Redigera</a>
+                                <form asp-action="DeleteTable" asp-route-id="@table.Id" method="post" class="d-inline"
+                                      onsubmit="return confirm('Är du säker på att du vill ta bort bord @table.Number?');">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-outline-danger">Ta bort</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+<div class="mt-3">
+    <a asp-action="Index" class="btn btn-secondary">Tillbaka till Dashboard</a>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

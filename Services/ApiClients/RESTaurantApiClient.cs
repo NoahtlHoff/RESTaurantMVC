@@ -209,6 +209,36 @@ namespace RESTaurantMVC.Services.ApiClients
 
             return await response.Content.ReadFromJsonAsync<List<TableVM>>();
         }
+        public async Task<TableVM?> GetTableByIdAsync(int id)
+        {
+            EnsureToken();
+            var response = await _httpClient.GetAsync($"api/tables/{id}");
+            if (!response.IsSuccessStatusCode)
+                return null;
+
+            return await response.Content.ReadFromJsonAsync<TableVM>();
+        }
+
+        public async Task<bool> CreateTableAsync(TableVM table)
+        {
+            EnsureToken();
+            var response = await _httpClient.PostAsJsonAsync("api/tables", table);
+            return response.IsSuccessStatusCode;
+        }
+
+        public async Task<bool> UpdateTableAsync(int id, TableVM table)
+        {
+            EnsureToken();
+            var response = await _httpClient.PutAsJsonAsync($"api/tables/{id}", table);
+            return response.IsSuccessStatusCode;
+        }
+
+        public async Task<bool> DeleteTableAsync(int id)
+        {
+            EnsureToken();
+            var response = await _httpClient.DeleteAsync($"api/tables/{id}");
+            return response.IsSuccessStatusCode;
+        }
 
         // CUSTOMERS (för att kunna skapa bokningar)
         public async Task<int?> CreateCustomerAsync(string name, string phone)
@@ -234,13 +264,6 @@ namespace RESTaurantMVC.Services.ApiClients
         public int Guests { get; set; }
         public int CustomerId { get; set; }
         public int TableId { get; set; }
-    }
-
-    public class TableVM
-    {
-        public int Id { get; set; }
-        public string Number { get; set; } = "";
-        public int Capacity { get; set; }
     }
 
     public class CustomerCreatedDto

@@ -1,0 +1,28 @@
+﻿@model RESTaurantMVC.Models.TableVM
+@{
+    ViewData["Title"] = "Lägg till bord";
+}
+
+<h1 class="mb-4">Lägg till bord</h1>
+
+<form asp-action="CreateTable" method="post" class="card shadow-sm p-4">
+    @Html.AntiForgeryToken()
+    <div class="mb-3">
+        <label asp-for="Number" class="form-label"></label>
+        <input asp-for="Number" class="form-control" />
+        <span asp-validation-for="Number" class="text-danger"></span>
+    </div>
+    <div class="mb-3">
+        <label asp-for="Capacity" class="form-label"></label>
+        <input asp-for="Capacity" class="form-control" />
+        <span asp-validation-for="Capacity" class="text-danger"></span>
+    </div>
+    <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary">Spara</button>
+        <a asp-action="Tables" class="btn btn-secondary">Avbryt</a>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
