@@ -1,5 +1,9 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "RESTaurant | Hem";
+    ViewData["MetaDescription"] = "Upptäck RESTaurant – en avslappnad restaurang i staden med säsongsbetonade menyer, vegetariska alternativ och enkel bordsbokning.";
+    ViewData["MetaKeywords"] = "restaurang hem, RESTaurant, boka bord, svensk meny";
+    ViewData["MetaImage"] = Url.Content("~/img/RESTaurant.png");
+    ViewData["CanonicalUrl"] = Url.Action("Index", "Home", null, Context.Request.Scheme);
 }
 
 @{
@@ -20,7 +24,7 @@
             </div>
             <div class="col-lg-5">
                 <div class="ratio ratio-4x3 rounded-4 overflow-hidden shadow-sm">
-                    <img src="~/img/RESTaurant.png" alt="Interiör och rätter på RESTaurant" class="w-100 h-100" style="object-fit:cover" />
+                    <img src="~/img/RESTaurant.png" alt="Interiör och rätter på RESTaurant" class="w-100 h-100" style="object-fit:cover" loading="lazy" decoding="async" />
                 </div>
             </div>
         </div>

@@ -1,7 +1,12 @@
 ﻿@* Views/Menu/Index.cshtml *@
 @model List<RESTaurantMVC.Models.MenuItemVM>
 @{
-    ViewData["Title"] = "Menu";
+    ViewData["Title"] = "RESTaurant | Meny";
+    ViewData["MetaDescription"] = "Utforska RESTaurants kompletta meny med säsongsbaserade rätter, vegetariska favoriter och prisvärda alternativ för alla smaker.";
+    ViewData["MetaKeywords"] = "RESTaurant meny, restaurangrätter, vegetariska rätter, takeaway";
+    ViewData["MetaImage"] = Url.Content("~/img/RESTaurant.png");
+    ViewData["CanonicalUrl"] = Url.Action("Menu", "Home", null, Context.Request.Scheme);
+    Layout = "_Layout";
 }
 
 @{
@@ -29,7 +34,7 @@
                             <div class="ratio ratio-4x3 rounded-top-4 overflow-hidden">
                                 <img src="@(string.IsNullOrWhiteSpace(dish.ImageUrl) ? Url.Content("~/img/placeholder.jpg") : dish.ImageUrl)"
                                      alt="@dish.Name"
-                                     class="w-100 h-100" style="object-fit:cover" loading="lazy" />
+                                     class="w-100 h-100" style="object-fit:cover" loading="lazy" decoding="async" />
                             </div>
                             <div class="card-body">
                                 <div class="d-flex align-items-start justify-content-between gap-3">

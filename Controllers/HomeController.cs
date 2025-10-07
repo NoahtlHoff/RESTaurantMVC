@@ -13,7 +13,7 @@ namespace RESTaurantMVC.Controllers
         {
             _apiClient = apiClient;
         }
-
+        [HttpGet("")]
         public async Task<IActionResult> Index()
         {
             var allItems = await _apiClient.GetAllMenuItemsAsync();
@@ -24,7 +24,7 @@ namespace RESTaurantMVC.Controllers
 
             return View(popularItems);
         }
-
+        [HttpGet("meny")]
         public async Task<IActionResult> Menu()
         {
             var items = await _apiClient.GetAllMenuItemsAsync();

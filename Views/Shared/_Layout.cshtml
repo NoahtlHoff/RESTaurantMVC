@@ -1,9 +1,28 @@
+@using Microsoft.AspNetCore.Http.Extensions
 <!DOCTYPE html>
 <html lang="sv">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - RESTaurant</title>
+    @{
+        var metaDescription = ViewData["MetaDescription"] as string ?? "RESTaurant erbjuder säsongsbetonade rätter, vegetariska alternativ och takeaway i hjärtat av staden.";
+        var metaKeywords = ViewData["MetaKeywords"] as string ?? "restaurang, meny, boka bord, RESTaurant";
+        var metaImage = ViewData["MetaImage"] as string ?? Url.Content("~/img/RESTaurant.png");
+        var canonicalUrl = ViewData["CanonicalUrl"] as string ?? Context.Request?.GetDisplayUrl();
+        var pageTitle = ViewData["Title"] as string ?? "RESTaurant";
+    }
+    <title>@pageTitle</title>
+    <meta name="description" content="@metaDescription" />
+    <meta name="keywords" content="@metaKeywords" />
+    @if (!string.IsNullOrWhiteSpace(canonicalUrl))
+    {
+        <link rel="canonical" href="@canonicalUrl" />
+    }
+    <meta property="og:title" content="@pageTitle" />
+    <meta property="og:description" content="@metaDescription" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="@canonicalUrl" />
+    <meta property="og:image" content="@metaImage" />
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/RESTaurantMVC.styles.css" asp-append-version="true" />
