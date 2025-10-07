@@ -1,77 +1,119 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using RESTaurantMVC.Models;
 using RESTaurantMVC.Services.ApiClients;
+using RESTaurantMVC.Models;
 
-namespace RESTaurantMVC.Controllers;
-
-[Authorize]
-[Route("admin")]
-public class AdminController : Controller
+namespace RESTaurantMVC.Controllers
 {
-    private readonly RESTaurantApiClient _api;
-    public AdminController(RESTaurantApiClient api) => _api = api;
-
-    [HttpGet]
-    public IActionResult Index()
+    [Authorize]
+    [Route("admin")]
+    public class AdminController : Controller
     {
-        return View();
-    }
+        private readonly RESTaurantApiClient _api;
+        public AdminController(RESTaurantApiClient api) => _api = api;
 
-    [HttpGet("menu")]
-    public IActionResult Menu()
-    {
-        return View();
-    }
+        // Dashboard
+        [HttpGet("")]
+        [HttpGet("index")]
+        public IActionResult Index()
+        {
+            return View();
+        }
 
-    [HttpGet("menu/all")]
-    public async Task<IActionResult> GetAllMenuItems()
-    {
-        var menuItems = await _api.GetAllMenuItemsAsync();
-        ViewData["Title"] = "Menyn – RESTaurant";
-        ViewData["Description"] = "Se hela menyn: namn, pris, beskrivning och bilder.";
-        return View(menuItems);
-    }
+        // API Endpoints för JavaScript
+        [HttpGet("api/bookings")]
+        public async Task<IActionResult> GetBookings()
+        {
+            var bookings = await _api.GetAllBookingsAsync();
+            return Ok(bookings);
+        }
 
-    [HttpGet]
-    [Route("menu/popular")]
-    public async Task<IActionResult> GetPopularMenuItems()
-    {
-        var popularMenuItems = await _api.GetPopularMenuItemsAsync();
-        ViewData["Title"] = "Populära rätter – RESTaurant";
-        ViewData["Description"] = "Se de mest populära rätterna.";
-        return View(popularMenuItems);
-    }
+        [HttpGet("api/bookings/{id}")]
+        public async Task<IActionResult> GetBooking(int id)
+        {
+            var booking = await _api.GetBookingByIdAsync(id);
+            if (booking == null) return NotFound();
+            return Ok(booking);
+        }
 
-    [HttpGet]
-    [Route("menu/{menuItemId:int}")]
-    public async Task<IActionResult> GetMenuItemById(int menuItemId)
-    {
-        var menuItem = await _api.GetMenuItemByIdAsync(menuItemId);
-        return View(menuItem);
-    }
+        [HttpPost("api/bookings")]
+        public async Task<IActionResult> CreateBooking([FromBody] BookingVM booking)
+        {
+            var id = await _api.CreateBookingAsync(booking);
+            if (id == 0) return BadRequest();
+            return Ok(new { id });
+        }
 
-    [HttpPost]
-    public async Task<IActionResult> CreateMenuItem(MenuItemVM newMenuItem)
-    {
-        var id = await _api.CreateMenuItemAsync(newMenuItem);
-        return CreatedAtAction(nameof(GetMenuItemById), new { menuItemId = id });
-    }
-
-    [HttpDelete]
-    [Route("menu/{menuItemId:int}")]
-    public async Task<IActionResult> DeleteMenuItem(int menuItemId)
-    {
-        var result = await _api.DeleteMenuItemAsync(menuItemId);
-        if (result == System.Net.HttpStatusCode.NoContent)
+        [HttpPut("api/bookings/{id}")]
+        public async Task<IActionResult> UpdateBooking(int id, [FromBody] BookingVM booking)
+        {
+            var success = await _api.UpdateBookingAsync(id, booking);
+            if (!success) return NotFound();
             return NoContent();
-        return NotFound();
-    }
+        }
 
+        [HttpDelete("api/bookings/{id}")]
+        public async Task<IActionResult> DeleteBooking(int id)
+        {
+            var success = await _api.DeleteBookingAsync(id);
+            if (!success) return NotFound();
+            return NoContent();
+        }
 
-    [HttpGet("table")]
-    public IActionResult Table()
-    {
-        return View();
+        // Menu
+        [HttpGet("menu")]
+        public IActionResult Menu()
+        {
+            return View();
+        }
+
+        [HttpGet("menu/create")]
+        public IActionResult CreateMenuItem()
+        {
+            return View();
+        }
+
+        [HttpGet("menu/edit")]
+        public IActionResult EditMenuItem()
+        {
+            return View();
+        }
+
+        [HttpGet("menu/delete")]
+        public IActionResult DeleteMenuItem()
+        {
+            return View();
+        }
+
+        // Tables
+        [HttpGet("tables")]
+        public IActionResult Tables()
+        {
+            return View();
+        }
+
+        [HttpGet("table/create")]
+        public IActionResult CreateTable()
+        {
+            return View();
+        }
+
+        [HttpGet("table/edit")]
+        public IActionResult EditTable()
+        {
+            return View();
+        }
+
+        [HttpGet("table/delete")]
+        public IActionResult DeleteTable()
+        {
+            return View();
+        }
+
+        [HttpGet("table")]
+        public IActionResult Table()
+        {
+            return View();
+        }
     }
 }

@@ -1,251 +1,166 @@
 @{
-    ViewData["Title"] = "Adminpanel – Bokningar";
+    ViewData["Title"] = "Adminpanel";
 }
 
-<h1 class="mb-2">Bokningar</h1>
-<p class="text-muted">Visar automatiskt denna och nästa vecka. Lägg till, redigera eller ta bort direkt.</p>
+<h1 class="mb-4">Adminpanel</h1>
 
-<div class="card shadow-sm">
+<div class="card shadow-sm mb-4">
     <div class="card-body">
-        <div class="d-flex flex-wrap gap-2 align-items-center mb-3">
-            <button id="btnToday" class="btn btn-outline-secondary btn-sm">Idag</button>
-            <button id="btnThisNext" class="btn btn-outline-secondary btn-sm">Denna + nästa vecka</button>
-            <button id="btnPrev" class="btn btn-outline-secondary btn-sm ms-md-2">« Föregående</button>
-            <button id="btnNext" class="btn btn-outline-secondary btn-sm">Nästa »</button>
-            <div class="ms-auto d-flex gap-2">
-                <input id="searchInput" class="form-control form-control-sm" placeholder="Sök namn, tel, e-post…" />
-                <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#bookingModal" data-mode="create">Lägg till bokning</button>
-            </div>
-        </div>
+        <h5 class="mb-3">Bokningar</h5>
 
-        <div class="small text-muted mb-2">Visar bokningar från <span id="fromLabel"></span> till <span id="toLabel"></span></div>
-
-        <div class="table-responsive">
-            <table class="table table-hover align-middle" id="bookingsTable">
-                <thead class="table-light">
-                    <tr>
-                        <th>Datum</th>
-                        <th>Tid</th>
-                        <th>Gäst</th>
-                        <th>Personer</th>
-                        <th>Bord</th>
-                        <th>Kontakt</th>
-                        <th class="text-end">Åtgärder</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
-        </div>
-
-        <div id="emptyState" class="text-center text-muted py-5 d-none">Inga bokningar hittades i vald period.</div>
-    </div>
-</div>
-
-<div class="row g-3 mt-4">
-    <div class="col-md-6">
-        <div class="card h-100 shadow-sm">
-            <div class="card-body">
-                <h2 class="h5 mb-1">Meny</h2>
-                <p class="text-muted mb-3">Hantera rätter och drycker.</p>
-            </div>
-            <ul class="list-group list-group-flush">
-                <li class="list-group-item"><a class="text-decoration-none" asp-controller="Admin" asp-action="Menu">Visa alla</a></li>
-                <li class="list-group-item"><a class="text-decoration-none" asp-controller="Admin" asp-action="CreateMenuItem">Lägg till</a></li>
-                <li class="list-group-item"><a class="text-decoration-none" asp-controller="Admin" asp-action="EditMenuItem">Redigera</a></li>
-                <li class="list-group-item"><a class="text-decoration-none" asp-controller="Admin" asp-action="DeleteMenuItem">Ta bort</a></li>
-            </ul>
-        </div>
-    </div>
-    <div class="col-md-6">
-        <div class="card h-100 shadow-sm">
-            <div class="card-body">
-                <h2 class="h5 mb-1">Bord</h2>
-                <p class="text-muted mb-3">Administrera restaurangens bord och platser.</p>
-            </div>
-            <ul class="list-group list-group-flush">
-                <li class="list-group-item"><a class="text-decoration-none" asp-controller="Admin" asp-action="Tables">Visa alla</a></li>
-                <li class="list-group-item"><a class="text-decoration-none" asp-controller="Admin" asp-action="CreateTable">Lägg till</a></li>
-                <li class="list-group-item"><a class="text-decoration-none" asp-controller="Admin" asp-action="EditTable">Redigera</a></li>
-                <li class="list-group-item"><a class="text-decoration-none" asp-controller="Admin" asp-action="DeleteTable">Ta bort</a></li>
-            </ul>
-        </div>
-    </div>
-</div>
-
-<!-- Minimal modal -->
-<div class="modal fade" id="bookingModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-        <form id="bookingForm" class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="bookingModalTitle">Ny bokning</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Stäng"></button>
-            </div>
-            <div class="modal-body">
-                <input type="hidden" name="id" id="bookingId" />
-                <div class="row g-2">
-                    <div class="col-7"><input class="form-control" type="date" name="date" id="date" required /></div>
-                    <div class="col-5"><input class="form-control" type="time" name="time" id="time" required /></div>
-                    <div class="col-8"><input class="form-control" placeholder="Gästnamn" name="guestName" id="guestName" required /></div>
-                    <div class="col-4"><input class="form-control" type="number" min="1" placeholder="Personer" name="partySize" id="partySize" required /></div>
-                    <div class="col-6"><input class="form-control" placeholder="Bord" name="tableName" id="tableName" /></div>
-                    <div class="col-6"><input class="form-control" type="tel" placeholder="Telefon" name="phone" id="phone" /></div>
-                    <div class="col-12"><input class="form-control" type="email" placeholder="E-post" name="email" id="email" /></div>
-                    <div class="col-12"><textarea class="form-control" rows="2" placeholder="Kommentar" name="notes" id="notes"></textarea></div>
+        <form id="form" onsubmit="save(event)" class="p-3 bg-light rounded mb-3">
+            <input type="hidden" id="id">
+            <div class="row g-2 mb-2">
+                <div class="col-md-5">
+                    <input type="text" class="form-control" id="name" placeholder="Namn" required>
+                </div>
+                <div class="col-md-4">
+                    <input type="tel" class="form-control" id="phone" placeholder="Telefonnummer">
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-success w-100">Spara</button>
                 </div>
             </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" type="button" data-bs-dismiss="modal">Avbryt</button>
-                <button class="btn btn-primary" type="submit">Spara</button>
+            <div class="row g-2">
+                <div class="col-md-3">
+                    <input type="date" class="form-control" id="date" required>
+                </div>
+                <div class="col-md-2">
+                    <input type="time" class="form-control" id="time" required>
+                </div>
+                <div class="col-md-2">
+                    <input type="number" class="form-control" id="size" placeholder="Antal" min="1" value="2" required>
+                </div>
+                <div class="col-md-2">
+                    <input type="text" class="form-control" id="table" placeholder="Bord">
+                </div>
             </div>
         </form>
+
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Datum & Tid</th>
+                    <th>Gäst</th>
+                    <th>Antal</th>
+                    <th>Telefon</th>
+                    <th>Bord</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody id="tbody">
+                <tr><td colspan="6" class="text-center">Laddar...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h5>Meny</h5>
+                <a class="btn btn-primary btn-sm me-2" asp-action="Menu">Visa</a>
+                <a class="btn btn-success btn-sm" asp-action="CreateMenuItem">Lägg till</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h5>Bord</h5>
+                <a class="btn btn-primary btn-sm me-2" asp-action="Tables">Visa</a>
+                <a class="btn btn-success btn-sm" asp-action="CreateTable">Lägg till</a>
+            </div>
+        </div>
     </div>
 </div>
 
 @section Scripts {
     <script>
-        (() => {
-          // === Hjälpare ===
-          const $ = (s, r = document) => r.querySelector(s);
-          const fmt = d => d.toLocaleDateString('sv-SE');
-          const iso = d => d.toISOString().slice(0,10);
-          const startOfWeek = d => { // måndag, lokal
-            const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-            const day = (x.getDay() || 7); // sön=7
-            if (day !== 1) x.setDate(x.getDate() - (day - 1));
-            return x;
-          };
-          const addDays = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
-          const escapeHtml = s => s?.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])) ?? '';
+        let bookings = [];
 
-          // === State / elementreferenser ===
-          const tbody = $('#bookingsTable tbody');
-          const emptyState = $('#emptyState');
-          const fromLabel = $('#fromLabel');
-          const toLabel = $('#toLabel');
-          const searchInput = $('#searchInput');
-          const modalEl = $('#bookingModal');
-          const form = $('#bookingForm');
+        document.addEventListener('DOMContentLoaded', () => {
+            setDefaults();
+            load();
+        });
 
-          let rangeFrom, rangeTo;
+        function setDefaults() {
+            const today = new Date().toISOString().slice(0, 10);
+            document.getElementById('date').value = today;
 
-          // === Ladda & rendera ===
-          async function loadBookings() {
-            fromLabel.textContent = fmt(rangeFrom);
-            toLabel.textContent = fmt(rangeTo);
+            const now = new Date();
+            let hour = now.getHours();
+            if (hour < 17) hour = 17;
+            if (hour > 21) hour = 17;
+            document.getElementById('time').value = `${hour.toString().padStart(2, '0')}:00`;
 
-            const url = new URL('/admin/api/bookings', window.location.origin);
-            url.searchParams.set('from', iso(rangeFrom));
-            url.searchParams.set('to', iso(rangeTo));
-            url.searchParams.set('q', searchInput.value || '');
+            document.getElementById('size').value = 2;
+        }
 
-            const res = await fetch(url, { headers: { 'Accept':'application/json' }});
-            const data = res.ok ? await res.json() : [];
-            renderTable(data);
-          }
+        async function load() {
+            const res = await fetch('/admin/api/bookings');
+            bookings = await res.json();
+            const tbody = document.getElementById('tbody');
 
-          function renderTable(rows) {
-            tbody.innerHTML = '';
-            if (!rows?.length) { emptyState.classList.remove('d-none'); return; }
-            emptyState.classList.add('d-none');
+            if (!bookings?.length) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center">Inga bokningar</td></tr>';
+                return;
+            }
 
-            rows.sort((a,b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
-            for (const r of rows) {
-              tbody.insertAdjacentHTML('beforeend', `
+            tbody.innerHTML = bookings.map(b => `
                 <tr>
-                  <td>${new Date(r.date).toLocaleDateString('sv-SE',{weekday:'short', day:'2-digit', month:'2-digit'})}</td>
-                  <td>${r.time?.slice(0,5) ?? ''}</td>
-                  <td>${escapeHtml(r.guestName ?? '')}</td>
-                  <td>${r.partySize ?? ''}</td>
-                  <td>${escapeHtml(r.tableName ?? '')}</td>
-                  <td>${r.phone ? `<div>${escapeHtml(r.phone)}</div>`:''}${r.email ? `<div>${escapeHtml(r.email)}</div>`:''}</td>
-                  <td class="text-end">
-                    <button class="btn btn-sm btn-outline-primary me-1" data-action="edit" data-id="${r.id}">Redigera</button>
-                    <button class="btn btn-sm btn-outline-danger" data-action="delete" data-id="${r.id}">Ta bort</button>
-                  </td>
+                    <td>${new Date(b.date).toLocaleDateString('sv')} ${b.time?.slice(0,5)}</td>
+                    <td>${b.guestName}</td>
+                    <td>${b.partySize}</td>
+                    <td>${b.phone || '-'}</td>
+                    <td>${b.tableName || '-'}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary" onclick="edit(${b.id})">Ändra</button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="del(${b.id})">Ta bort</button>
+                    </td>
                 </tr>
-              `);
-            }
-          }
+            `).join('');
+        }
 
-          // === Intervall-knappar ===
-          function setThisPlusNextWeek(){
-            const monday = startOfWeek(new Date());
-            rangeFrom = monday;
-            rangeTo = addDays(monday, 13);
-            loadBookings();
-          }
-          function setToday(){
-            const t = new Date(); rangeFrom = new Date(t.getFullYear(), t.getMonth(), t.getDate()); rangeTo = rangeFrom; loadBookings();
-          }
-          function shiftWeeks(n){ rangeFrom = addDays(rangeFrom, n*7); rangeTo = addDays(rangeTo, n*7); loadBookings(); }
+        function edit(id) {
+            const b = bookings.find(x => x.id === id);
+            document.getElementById('id').value = b.id;
+            document.getElementById('name').value = b.guestName;
+            document.getElementById('date').value = b.date?.slice(0,10);
+            document.getElementById('time').value = b.time?.slice(0,5);
+            document.getElementById('size').value = b.partySize;
+            document.getElementById('phone').value = b.phone || '';
+            document.getElementById('table').value = b.tableName || '';
+        }
 
-          $('#btnThisNext').addEventListener('click', setThisPlusNextWeek);
-          $('#btnToday').addEventListener('click', setToday);
-          $('#btnPrev').addEventListener('click', () => shiftWeeks(-1));
-          $('#btnNext').addEventListener('click', () => shiftWeeks(1));
+        async function del(id) {
+            if (!confirm('Ta bort?')) return;
+            await fetch(`/admin/api/bookings/${id}`, { method: 'DELETE' });
+            load();
+        }
 
-          // === Sök (debounce) ===
-          let t; searchInput.addEventListener('input', () => { clearTimeout(t); t = setTimeout(loadBookings, 250); });
-
-          // === Tabellåtgärder ===
-          tbody.addEventListener('click', async e => {
-            const btn = e.target.closest('button[data-action]'); if (!btn) return;
-            const id = btn.dataset.id;
-
-            if (btn.dataset.action === 'edit') {
-              const res = await fetch(`/admin/api/bookings/${id}`, { headers:{ 'Accept':'application/json' }});
-              if (!res.ok) return;
-              const b = await res.json(); openEditModal(b);
-            }
-
-            if (btn.dataset.action === 'delete') {
-              if (!confirm('Är du säker på att du vill ta bort denna bokning?')) return;
-              const res = await fetch(`/admin/api/bookings/${id}`, { method:'DELETE' });
-              if (res.ok) loadBookings();
-            }
-          });
-
-          // === Modal (create/edit) ===
-          modalEl.addEventListener('show.bs.modal', ev => {
-            const mode = ev.relatedTarget?.getAttribute('data-mode') ?? 'create';
-            if (mode === 'create') {
-              form.reset();
-              $('#bookingId').value = '';
-              $('#bookingModalTitle').textContent = 'Ny bokning';
-            }
-          });
-
-          function openEditModal(b) {
-            $('#bookingModalTitle').textContent = 'Redigera bokning';
-            $('#bookingId').value = b.id ?? '';
-            $('#date').value = (b.date ?? '').slice(0,10);
-            $('#time').value = (b.time ?? '').slice(0,5);
-            $('#guestName').value = b.guestName ?? '';
-            $('#partySize').value = b.partySize ?? '';
-            $('#tableName').value = b.tableName ?? '';
-            $('#phone').value = b.phone ?? '';
-            $('#email').value = b.email ?? '';
-            $('#notes').value = b.notes ?? '';
-            new bootstrap.Modal(modalEl).show();
-          }
-
-          form.addEventListener('submit', async e => {
+        async function save(e) {
             e.preventDefault();
-            const payload = Object.fromEntries(new FormData(form).entries());
-            const isEdit = !!payload.id;
+            const id = document.getElementById('id').value;
 
-            const res = await fetch(isEdit ? `/admin/api/bookings/${payload.id}` : '/admin/api/bookings', {
-              method: isEdit ? 'PUT' : 'POST',
-              headers: { 'Content-Type':'application/json' },
-              body: JSON.stringify(payload)
+            await fetch(id ? `/admin/api/bookings/${id}` : '/admin/api/bookings', {
+                method: id ? 'PUT' : 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    guestName: document.getElementById('name').value,
+                    date: document.getElementById('date').value,
+                    time: document.getElementById('time').value,
+                    partySize: parseInt(document.getElementById('size').value),
+                    tableName: document.getElementById('table').value,
+                    phone: document.getElementById('phone').value
+                })
             });
 
-            if (res.ok) { bootstrap.Modal.getInstance(modalEl)?.hide(); loadBookings(); }
-            else alert('Kunde inte spara bokningen.');
-          });
-
-          // Init
-          setThisPlusNextWeek();
-        })();
+            document.getElementById('form').reset();
+            document.getElementById('id').value = '';
+            setDefaults();
+            load();
+        }
     </script>
 }
