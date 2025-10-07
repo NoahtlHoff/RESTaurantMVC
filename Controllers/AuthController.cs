@@ -57,7 +57,8 @@ namespace RESTaurantMVC.Controllers
 
             var claims = new List<Claim>
             {
-                new(ClaimTypes.Name, model.Username)
+                new(ClaimTypes.Name, model.Username),
+                new(SessionKeys.ApiToken, authResponse.Token)
             };
 
             var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);

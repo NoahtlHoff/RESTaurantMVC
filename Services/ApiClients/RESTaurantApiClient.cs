@@ -1,7 +1,9 @@
-using System.Net.Http.Headers;
-using System.Text;
-using System.Text.Json;
 using RESTaurantMVC.Models;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Text.Json;
 
 namespace RESTaurantMVC.Services.ApiClients
 {
@@ -31,7 +33,23 @@ namespace RESTaurantMVC.Services.ApiClients
 
         private void EnsureToken()
         {
-            var token = _contextAccessor.HttpContext?.Session.GetString(SessionKeys.ApiToken);
+            var context = _contextAccessor.HttpContext;
+            if (context is null)
+            {
+                return;
+            }
+
+            var token = context.Session.GetString(SessionKeys.ApiToken);
+            if (string.IsNullOrWhiteSpace(token))
+            {
+                token = context.User?.Claims.FirstOrDefault(c => c.Type == SessionKeys.ApiToken)?.Value;
+
+                if (!string.IsNullOrWhiteSpace(token))
+                {
+                    context.Session.SetString(SessionKeys.ApiToken, token);
+                }
+            }
+
             if (!string.IsNullOrWhiteSpace(token))
             {
                 SetBearerToken(token);
@@ -60,200 +78,248 @@ namespace RESTaurantMVC.Services.ApiClients
             var response = await _httpClient.GetAsync("api/menu-items");
             if (!response.IsSuccessStatusCode)
                 return null;
-
             return await response.Content.ReadFromJsonAsync<List<MenuItemVM>>();
         }
 
-        public async Task<MenuItemVM?> GetMenuItemByIdAsync(int id)
-        {
-            EnsureToken();
-            var response = await _httpClient.GetAsync($"api/menu-items/{id}");
-            if (!response.IsSuccessStatusCode)
-                return null;
-
-            return await response.Content.ReadFromJsonAsync<MenuItemVM>();
-        }
-
-        public async Task<bool> CreateMenuItemAsync(MenuItemVM item)
-        {
-            EnsureToken();
-            var response = await _httpClient.PostAsJsonAsync("api/menu-items", item);
-            return response.IsSuccessStatusCode;
-        }
-
-        public async Task<bool> UpdateMenuItemAsync(int id, MenuItemVM item)
-        {
-            EnsureToken();
-            var response = await _httpClient.PutAsJsonAsync($"api/menu-items/{id}", item);
-            return response.IsSuccessStatusCode;
-        }
-
         public async Task<bool> DeleteMenuItemAsync(int id)
+    {
+        EnsureToken();
+        var response = await _httpClient.DeleteAsync($"api/menu-items/{id}");
+        return response.IsSuccessStatusCode;
+    }
+
+    // BOOKINGS
+    public async Task<List<BookingVM>?> GetAllBookingsAsync()
+    {
+        try
         {
             EnsureToken();
-            var response = await _httpClient.DeleteAsync($"api/menu-items/{id}");
-            return response.IsSuccessStatusCode;
-        }
+            var response = await _httpClient.GetAsync("api/bookings");
 
-        // BOOKINGS
-        public async Task<List<BookingVM>?> GetAllBookingsAsync()
-        {
-            try
+            if (!response.IsSuccessStatusCode)
             {
-                EnsureToken();
-                var response = await _httpClient.GetAsync("api/bookings");
+                var errorContent = await response.Content.ReadAsStringAsync();
+                throw new HttpRequestException(
+                    $"API returned {response.StatusCode}: {errorContent}");
+            }
 
-                if (!response.IsSuccessStatusCode)
+            var bookings = await response.Content.ReadFromJsonAsync<List<BookingApiDto>>();
+            if (bookings == null)
+            {
+                return new List<BookingVM>();
+            }
+
+            var customerCache = new Dictionary<int, CustomerDto?>();
+            var tableCache = new Dictionary<int, TableVM?>();
+            var result = new List<BookingVM>();
+
+            foreach (var booking in bookings)
+            {
+                CustomerDto? customer = null;
+                if (booking.CustomerId > 0)
                 {
-                    var errorContent = await response.Content.ReadAsStringAsync();
-                    throw new HttpRequestException(
-                        $"API returned {response.StatusCode}: {errorContent}");
+                    if (!customerCache.TryGetValue(booking.CustomerId, out customer))
+                    {
+                        customer = await GetCustomerByIdAsync(booking.CustomerId);
+                        customerCache[booking.CustomerId] = customer;
+                    }
                 }
 
-                var bookings = await response.Content.ReadFromJsonAsync<List<BookingApiDto>>();
-
-                // Konvertera från API-format till VM-format
-                return bookings?.Select(b => new BookingVM
+                TableVM? table = null;
+                if (booking.TableId > 0)
                 {
-                    Id = b.Id,
-                    GuestName = $"Kund {b.CustomerId}", // Vi har inte kundnamn direkt
-                    Date = b.StartTime.ToString("yyyy-MM-dd"),
-                    Time = b.StartTime.ToString("HH:mm"),
-                    PartySize = b.Guests,
-                    TableName = $"Bord {b.TableId}",
-                    Phone = "" // API:et har inte telefon på bokning
-                }).ToList();
+                    if (!tableCache.TryGetValue(booking.TableId, out table))
+                    {
+                        table = await GetTableByIdAsync(booking.TableId);
+                        tableCache[booking.TableId] = table;
+                    }
+                }
+
+                result.Add(ConvertToBookingVm(booking, customer, table));
             }
-            catch (HttpRequestException)
-            {
-                throw; // Låt controllern hantera detta
-            }
-            catch (Exception ex)
-            {
-                throw new HttpRequestException($"Error fetching bookings: {ex.Message}", ex);
-            }
+
+            return result;
+        }
+        catch (HttpRequestException)
+        {
+            throw; // Låt controllern hantera detta
+        }
+        catch (Exception ex)
+        {
+            throw new HttpRequestException($"Error fetching bookings: {ex.Message}", ex);
+        }
+    }
+
+    public async Task<BookingVM?> GetBookingByIdAsync(int id)
+    {
+        EnsureToken();
+        var response = await _httpClient.GetAsync($"api/bookings/{id}");
+        if (!response.IsSuccessStatusCode)
+            return null;
+
+        var booking = await response.Content.ReadFromJsonAsync<BookingApiDto>();
+        if (booking == null) return null;
+
+        CustomerDto? customer = null;
+        if (booking.CustomerId > 0)
+        {
+            customer = await GetCustomerByIdAsync(booking.CustomerId);
         }
 
-        public async Task<BookingVM?> GetBookingByIdAsync(int id)
+        TableVM? table = null;
+        if (booking.TableId > 0)
         {
-            EnsureToken();
-            var response = await _httpClient.GetAsync($"api/bookings/{id}");
-            if (!response.IsSuccessStatusCode)
-                return null;
-
-            var booking = await response.Content.ReadFromJsonAsync<BookingApiDto>();
-            if (booking == null) return null;
-
-            return new BookingVM
-            {
-                Id = booking.Id,
-                GuestName = $"Kund {booking.CustomerId}",
-                Date = booking.StartTime.ToString("yyyy-MM-dd"),
-                Time = booking.StartTime.ToString("HH:mm"),
-                PartySize = booking.Guests,
-                TableName = $"Bord {booking.TableId}"
-            };
+            table = await GetTableByIdAsync(booking.TableId);
         }
 
-        public async Task<bool> CreateBookingAsync(BookingVM booking)
+        return ConvertToBookingVm(booking, customer, table);
+    }
+
+    private async Task<CustomerDto?> GetCustomerByIdAsync(int id)
+    {
+        EnsureToken();
+        var response = await _httpClient.GetAsync($"api/customers/{id}");
+        if (!response.IsSuccessStatusCode)
+            return null;
+
+        return await response.Content.ReadFromJsonAsync<CustomerDto>();
+    }
+
+    private static BookingVM ConvertToBookingVm(BookingApiDto booking, CustomerDto? customer, TableVM? table)
+    {
+        return new BookingVM
         {
-            EnsureToken();
+            Id = booking.Id,
+            GuestName = Normalize(customer?.Name),
+            Date = booking.StartTime.ToString("yyyy-MM-dd"),
+            Time = booking.StartTime.ToString("HH:mm"),
+            PartySize = booking.Guests,
+            TableName = ResolveTableName(table, booking.TableId),
+            Phone = ResolvePhone(customer),
+            Email = Normalize(customer?.Email)
+        };
+    }
 
-            // Konvertera från VM till API-format
-            var startTime = DateTime.Parse($"{booking.Date} {booking.Time}");
-
-            var apiBooking = new
-            {
-                startTime = startTime,
-                guests = booking.PartySize,
-                customerId = 1, // Hårdkodat för nu - skulle behöva skapas först
-                tableId = 1 // Hårdkodat för nu - skulle behöva väljas från tillgängliga
-            };
-
-            var response = await _httpClient.PostAsJsonAsync("api/bookings", apiBooking);
-            return response.IsSuccessStatusCode;
+    private static string? ResolvePhone(CustomerDto? customer)
+    {
+        if (customer is null)
+        {
+            return null;
         }
 
-        public async Task<bool> UpdateBookingAsync(int id, BookingVM booking)
+        var phone = Normalize(customer.PhoneNumber);
+        if (phone != null)
         {
-            EnsureToken();
-
-            var startTime = DateTime.Parse($"{booking.Date} {booking.Time}");
-
-            var apiBooking = new
-            {
-                startTime = startTime,
-                guests = booking.PartySize,
-                customerId = 1,
-                tableId = 1
-            };
-
-            var response = await _httpClient.PutAsJsonAsync($"api/bookings/{id}", apiBooking);
-            return response.IsSuccessStatusCode;
+            return phone;
         }
 
-        public async Task<bool> DeleteBookingAsync(int id)
+        return Normalize(customer.Phone);
+    }
+
+    private static string? ResolveTableName(TableVM? table, int tableId)
+    {
+        var number = Normalize(table?.Number);
+        if (!string.IsNullOrWhiteSpace(number))
         {
-            EnsureToken();
-            var response = await _httpClient.DeleteAsync($"api/bookings/{id}");
-            return response.IsSuccessStatusCode;
+            return number;
         }
 
-        // TABLES
-        public async Task<List<TableVM>?> GetAllTablesAsync()
+        if (table?.Id > 0)
         {
-            EnsureToken();
-            var response = await _httpClient.GetAsync("api/tables");
-            if (!response.IsSuccessStatusCode)
-                return null;
-
-            return await response.Content.ReadFromJsonAsync<List<TableVM>>();
+            return table.Id.ToString();
         }
-        public async Task<TableVM?> GetTableByIdAsync(int id)
+
+        return tableId > 0 ? tableId.ToString() : null;
+    }
+
+    private static string? Normalize(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
         {
-            EnsureToken();
-            var response = await _httpClient.GetAsync($"api/tables/{id}");
-            if (!response.IsSuccessStatusCode)
-                return null;
+            return null;
+        }
+
+        return value.Trim();
+    }
+
+    public async Task<bool> CreateBookingAsync(BookingVM booking)
+    {
+        EnsureToken();
+
+        // Konvertera från VM till API-format
+        var startTime = DateTime.Parse($"{booking.Date} {booking.Time}");
+
+        var apiBooking = new
+        {
+            startTime = startTime,
+            guests = booking.PartySize,
+            customerId = 1, // Hårdkodat för nu - skulle behöva skapas först
+            tableId = 1 // Hårdkodat för nu - skulle behöva väljas från tillgängliga
+        };
+
+        var response = await _httpClient.PostAsJsonAsync("api/bookings", apiBooking);
+        return response.IsSuccessStatusCode;
+    }
+
+    public async Task<bool> UpdateBookingAsync(int id, BookingVM booking)
+    {
+        EnsureToken();
+
+        var startTime = DateTime.Parse($"{booking.Date} {booking.Time}");
+
+        var apiBooking = new
+        {
+            startTime = startTime,
+            guests = booking.PartySize,
+            customerId = 1,
+            tableId = 1
+        };
+
+        var response = await _httpClient.PutAsJsonAsync($"api/bookings/{id}", apiBooking);
+        return response.IsSuccessStatusCode;
+    }
+
+    public async Task<bool> DeleteBookingAsync(int id)
+    { 
 
             return await response.Content.ReadFromJsonAsync<TableVM>();
-        }
+    }
 
-        public async Task<bool> CreateTableAsync(TableVM table)
-        {
-            EnsureToken();
-            var response = await _httpClient.PostAsJsonAsync("api/tables", table);
-            return response.IsSuccessStatusCode;
-        }
+    public async Task<bool> CreateTableAsync(TableVM table)
+    {
+        EnsureToken();
+        var response = await _httpClient.PostAsJsonAsync("api/tables", table);
+        return response.IsSuccessStatusCode;
+    }
 
-        public async Task<bool> UpdateTableAsync(int id, TableVM table)
-        {
-            EnsureToken();
-            var response = await _httpClient.PutAsJsonAsync($"api/tables/{id}", table);
-            return response.IsSuccessStatusCode;
-        }
+    public async Task<bool> UpdateTableAsync(int id, TableVM table)
+    {
+        EnsureToken();
+        var response = await _httpClient.PutAsJsonAsync($"api/tables/{id}", table);
+        return response.IsSuccessStatusCode;
+    }
 
-        public async Task<bool> DeleteTableAsync(int id)
-        {
-            EnsureToken();
-            var response = await _httpClient.DeleteAsync($"api/tables/{id}");
-            return response.IsSuccessStatusCode;
-        }
+    public async Task<bool> DeleteTableAsync(int id)
+    {
+        EnsureToken();
+        var response = await _httpClient.DeleteAsync($"api/tables/{id}");
+        return response.IsSuccessStatusCode;
+    }
 
-        // CUSTOMERS (för att kunna skapa bokningar)
-        public async Task<int?> CreateCustomerAsync(string name, string phone)
-        {
-            EnsureToken();
+    // CUSTOMERS (för att kunna skapa bokningar)
+    public async Task<int?> CreateCustomerAsync(string name, string phone)
+    {
+        EnsureToken();
 
-            var customer = new { name, phone };
-            var response = await _httpClient.PostAsJsonAsync("api/customers", customer);
+        var customer = new { name, phone };
+        var response = await _httpClient.PostAsJsonAsync("api/customers", customer);
 
-            if (!response.IsSuccessStatusCode)
-                return null;
+        if (!response.IsSuccessStatusCode)
+            return null;
 
-            var created = await response.Content.ReadFromJsonAsync<CustomerCreatedDto>();
-            return created?.Id;
-        }
+        var created = await response.Content.ReadFromJsonAsync<CustomerCreatedDto>();
+        return created?.Id;
+    }
     }
 
     // DTO:er för API-kommunikation
@@ -264,6 +330,15 @@ namespace RESTaurantMVC.Services.ApiClients
         public int Guests { get; set; }
         public int CustomerId { get; set; }
         public int TableId { get; set; }
+    }
+
+    public class CustomerDto
+    {
+        public int Id { get; set; }
+        public string? Name { get; set; }
+        public string? PhoneNumber { get; set; }
+        public string? Phone { get; set; }
+        public string? Email { get; set; }
     }
 
     public class CustomerCreatedDto
