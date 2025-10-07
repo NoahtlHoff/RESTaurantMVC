@@ -6,18 +6,28 @@
 
 <div class="card shadow-sm mb-4">
     <div class="card-body">
-        <h5 class="mb-3">Bokningar</h5>
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="mb-0">Bokningar</h5>
+            <div>
+                <button class="btn btn-sm btn-outline-secondary" onclick="prevWeek()">← Förra veckan</button>
+                <button class="btn btn-sm btn-primary" onclick="thisWeek()">Denna vecka</button>
+                <button class="btn btn-sm btn-outline-secondary" onclick="nextWeek()">Nästa vecka →</button>
+            </div>
+        </div>
 
-        <form id="form" onsubmit="save(event)" class="p-3 bg-light rounded mb-3">
+        <form id="form" onsubmit="save(event)" class="p-3 bg-light rounded mb-4">
             <input type="hidden" id="id">
             <div class="row g-2 mb-2">
-                <div class="col-md-5">
+                <div class="col-md-4">
                     <input type="text" class="form-control" id="name" placeholder="Namn" required>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <input type="tel" class="form-control" id="phone" placeholder="Telefonnummer">
                 </div>
                 <div class="col-md-3">
+                    <input type="text" class="form-control" id="table" placeholder="Bord">
+                </div>
+                <div class="col-md-2">
                     <button type="submit" class="btn btn-success w-100">Spara</button>
                 </div>
             </div>
@@ -31,29 +41,19 @@
                 <div class="col-md-2">
                     <input type="number" class="form-control" id="size" placeholder="Antal" min="1" value="2" required>
                 </div>
-                <div class="col-md-2">
-                    <input type="text" class="form-control" id="table" placeholder="Bord">
-                </div>
             </div>
         </form>
 
         <div id="error-message" class="alert alert-danger d-none"></div>
 
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Datum & Tid</th>
-                    <th>Gäst</th>
-                    <th>Antal</th>
-                    <th>Telefon</th>
-                    <th>Bord</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody id="tbody">
-                <tr><td colspan="6" class="text-center">Laddar...</td></tr>
-            </tbody>
-        </table>
+        <!-- Date selector and bookings grouped by date -->
+        <div id="bookings-container">
+            <div class="text-center py-4">
+                <div class="spinner-border" role="status">
+                    <span class="visually-hidden">Laddar...</span>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -80,10 +80,11 @@
 @section Scripts {
     <script>
         let bookings = [];
+        let currentWeekStart = new Date();
 
         document.addEventListener('DOMContentLoaded', () => {
             setDefaults();
-            load();
+            thisWeek();
         });
 
         function setDefaults() {
@@ -106,8 +107,37 @@
             setTimeout(() => errorDiv.classList.add('d-none'), 5000);
         }
 
+        function getMonday(d) {
+            const date = new Date(d);
+            const day = date.getDay();
+            const diff = date.getDate() - day + (day === 0 ? -6 : 1);
+            return new Date(date.setDate(diff));
+        }
+
+        function thisWeek() {
+            currentWeekStart = getMonday(new Date());
+            load();
+        }
+
+        function prevWeek() {
+            currentWeekStart.setDate(currentWeekStart.getDate() - 7);
+            load();
+        }
+
+        function nextWeek() {
+            currentWeekStart.setDate(currentWeekStart.getDate() + 7);
+            load();
+        }
+
+        function formatDate(dateStr) {
+            const date = new Date(dateStr);
+            const days = ['Sön', 'Mån', 'Tis', 'Ons', 'Tor', 'Fre', 'Lör'];
+            const months = ['jan', 'feb', 'mar', 'apr', 'maj', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec'];
+            return `${days[date.getDay()]} ${date.getDate()} ${months[date.getMonth()]}`;
+        }
+
         async function load() {
-            const tbody = document.getElementById('tbody');
+            const container = document.getElementById('bookings-container');
 
             try {
                 const res = await fetch('/admin/api/bookings');
@@ -118,7 +148,6 @@
                         const errorData = await res.json();
                         errorMsg = errorData.error || errorMsg;
                     } catch (e) {
-                        // Om response inte är JSON
                         const text = await res.text();
                         console.error('Server error:', text);
                     }
@@ -127,29 +156,117 @@
 
                 bookings = await res.json();
 
-                if (!bookings || bookings.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="6" class="text-center">Inga bokningar</td></tr>';
+                // Filter bookings for the current week
+                const weekEnd = new Date(currentWeekStart);
+                weekEnd.setDate(weekEnd.getDate() + 7);
+
+                const weekBookings = bookings.filter(b => {
+                    const bookingDate = new Date(b.date);
+                    return bookingDate >= currentWeekStart && bookingDate < weekEnd;
+                });
+
+                // Group bookings by date
+                const groupedByDate = {};
+                weekBookings.forEach(b => {
+                    if (!groupedByDate[b.date]) {
+                        groupedByDate[b.date] = [];
+                    }
+                    groupedByDate[b.date].push(b);
+                });
+
+                // Sort each day's bookings by time
+                Object.keys(groupedByDate).forEach(date => {
+                    groupedByDate[date].sort((a, b) => {
+                        const timeA = a.time || '00:00';
+                        const timeB = b.time || '00:00';
+                        return timeA.localeCompare(timeB);
+                    });
+                });
+
+                // Generate days for the week
+                const days = [];
+                for (let i = 0; i < 7; i++) {
+                    const date = new Date(currentWeekStart);
+                    date.setDate(date.getDate() + i);
+                    days.push(date.toISOString().split('T')[0]);
+                }
+
+                if (days.length === 0 || weekBookings.length === 0) {
+                    container.innerHTML = `
+                        <div class="alert alert-info">
+                            Inga bokningar för veckan ${formatDate(currentWeekStart.toISOString())} - ${formatDate(weekEnd.toISOString())}
+                        </div>
+                    `;
                     return;
                 }
 
-                tbody.innerHTML = bookings.map(b => `
-                    <tr>
-                        <td>${b.date} ${b.time?.slice(0,5) || ''}</td>
-                        <td>${b.guestName || '-'}</td>
-                        <td>${b.partySize || '-'}</td>
-                        <td>${b.phone || '-'}</td>
-                        <td>${b.tableName || '-'}</td>
-                        <td>
-                            <button class="btn btn-sm btn-outline-primary" onclick="edit(${b.id})">Ändra</button>
-                            <button class="btn btn-sm btn-outline-danger" onclick="del(${b.id})">Ta bort</button>
-                        </td>
-                    </tr>
-                `).join('');
+                // Create the HTML
+                let html = '<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 g-3">';
+
+                days.forEach(date => {
+                    const dayBookings = groupedByDate[date] || [];
+                    const isToday = date === new Date().toISOString().split('T')[0];
+
+                    html += `
+                        <div class="col">
+                            <div class="card h-100 ${isToday ? 'border-primary' : ''}">
+                                <div class="card-header ${isToday ? 'bg-primary text-white' : 'bg-light'}">
+                                    <strong>${formatDate(date)}</strong>
+                                    ${isToday ? '<span class="badge bg-white text-primary ms-2">Idag</span>' : ''}
+                                    <br>
+                                    <small>${dayBookings.length} bokning${dayBookings.length !== 1 ? 'ar' : ''}</small>
+                                </div>
+                                <div class="card-body p-2">
+                    `;
+
+                    if (dayBookings.length === 0) {
+                        html += '<p class="text-muted text-center my-3 small">Inga bokningar</p>';
+                    } else {
+                        dayBookings.forEach(b => {
+                            html += `
+                                <div class="border rounded p-2 mb-2 bg-light">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <strong>${b.time?.slice(0,5) || '-'}</strong>
+                                            <span class="badge bg-secondary ms-1">${b.partySize || '-'}p</span>
+                                        </div>
+                                        <div class="btn-group btn-group-sm">
+                                            <button class="btn btn-outline-primary btn-sm" onclick="edit(${b.id})" title="Ändra">
+                                                ✏️
+                                            </button>
+                                            <button class="btn btn-outline-danger btn-sm" onclick="del(${b.id})" title="Ta bort">
+                                                🗑️
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="small mt-1">
+                                        <div><strong>${b.guestName || 'Ingen namn'}</strong></div>
+                                        ${b.phone ? `<div class="text-muted">📞 ${b.phone}</div>` : ''}
+                                        ${b.tableName ? `<div class="text-muted">🪑 Bord ${b.tableName}</div>` : ''}
+                                    </div>
+                                </div>
+                            `;
+                        });
+                    }
+
+                    html += `
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                html += '</div>';
+                container.innerHTML = html;
 
             } catch (error) {
                 console.error('Error loading bookings:', error);
                 showError('Kunde inte ladda bokningar: ' + error.message);
-                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">Kunde inte ladda bokningar. Kontrollera att API:et körs.</td></tr>';
+                container.innerHTML = `
+                    <div class="alert alert-danger">
+                        Kunde inte ladda bokningar. Kontrollera att API:et körs.
+                    </div>
+                `;
             }
         }
 
@@ -164,10 +281,13 @@
             document.getElementById('size').value = b.partySize || 2;
             document.getElementById('phone').value = b.phone || '';
             document.getElementById('table').value = b.tableName || '';
+
+            // Scroll to form
+            document.getElementById('form').scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
 
         async function del(id) {
-            if (!confirm('Ta bort?')) return;
+            if (!confirm('Ta bort denna bokning?')) return;
 
             try {
                 const res = await fetch(`/admin/api/bookings/${id}`, { method: 'DELETE' });
