@@ -16,7 +16,6 @@ namespace RESTaurantMVC.Controllers
 
         public async Task<IActionResult> Index()
         {
-            // Hämta populära rätter från API
             var allItems = await _apiClient.GetAllMenuItemsAsync();
             var popularItems = allItems?
                 .Where(item => item.IsPopular)

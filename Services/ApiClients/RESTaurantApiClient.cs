@@ -80,13 +80,34 @@ namespace RESTaurantMVC.Services.ApiClients
                 return null;
             return await response.Content.ReadFromJsonAsync<List<MenuItemVM>>();
         }
+        public async Task<MenuItemVM?> GetMenuItemByIdAsync(int id)
+        {
+            EnsureToken();
+            var response = await _httpClient.GetAsync($"api/menu-items/{id}");
+            if (!response.IsSuccessStatusCode)
+                return null;
+            return await response.Content.ReadFromJsonAsync<MenuItemVM>();
+        }
 
+        public async Task<bool> CreateMenuItemAsync(MenuItemVM item)
+        {
+            EnsureToken();
+            var response = await _httpClient.PostAsJsonAsync("api/menu-items", item);
+            return response.IsSuccessStatusCode;
+        }
+
+        public async Task<bool> UpdateMenuItemAsync(int id, MenuItemVM item)
+        {
+            EnsureToken();
+            var response = await _httpClient.PutAsJsonAsync($"api/menu-items/{id}", item);
+            return response.IsSuccessStatusCode;
+        }
         public async Task<bool> DeleteMenuItemAsync(int id)
-    {
+        {
         EnsureToken();
         var response = await _httpClient.DeleteAsync($"api/menu-items/{id}");
         return response.IsSuccessStatusCode;
-    }
+        }
 
     // BOOKINGS
     public async Task<List<BookingVM>?> GetAllBookingsAsync()
@@ -279,13 +300,34 @@ namespace RESTaurantMVC.Services.ApiClients
         return response.IsSuccessStatusCode;
     }
 
-    public async Task<bool> DeleteBookingAsync(int id)
-    { 
+        public async Task<bool> DeleteBookingAsync(int id)
+        {
+            EnsureToken();
+            var response = await _httpClient.DeleteAsync($"api/bookings/{id}");
+            return response.IsSuccessStatusCode;
+        }
+
+        public async Task<List<TableVM>?> GetAllTablesAsync()
+        {
+            EnsureToken();
+            var response = await _httpClient.GetAsync("api/tables");
+            if (!response.IsSuccessStatusCode)
+                return null;
+
+            return await response.Content.ReadFromJsonAsync<List<TableVM>>();
+        }
+
+        public async Task<TableVM?> GetTableByIdAsync(int id)
+        {
+            EnsureToken();
+            var response = await _httpClient.GetAsync($"api/tables/{id}");
+            if (!response.IsSuccessStatusCode)
+                return null;
 
             return await response.Content.ReadFromJsonAsync<TableVM>();
-    }
+        }
 
-    public async Task<bool> CreateTableAsync(TableVM table)
+        public async Task<bool> CreateTableAsync(TableVM table)
     {
         EnsureToken();
         var response = await _httpClient.PostAsJsonAsync("api/tables", table);

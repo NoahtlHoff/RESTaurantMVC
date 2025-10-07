@@ -35,7 +35,7 @@ namespace RESTaurantMVC.Controllers
             }
         }
 
-        // ===== BOOKINGS API (för AJAX-anrop från Index-vyn) =====
+        // ===== BOOKINGS API =====
         [HttpGet("api/bookings")]
         public async Task<IActionResult> GetBookings()
         {
@@ -140,7 +140,7 @@ namespace RESTaurantMVC.Controllers
             }
         }
 
-        // ===== MENU MANAGEMENT =====
+        // ===== MENU =====
         [HttpGet("menu")]
         public async Task<IActionResult> Menu()
         {
@@ -251,7 +251,7 @@ namespace RESTaurantMVC.Controllers
             }
         }
 
-        // ===== TABLES MANAGEMENT =====
+        // ===== TABLES =====
         [HttpGet("tables")]
         public async Task<IActionResult> Tables()
         {
