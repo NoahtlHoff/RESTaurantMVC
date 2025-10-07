@@ -31,6 +31,10 @@ namespace RESTaurantMVC.Controllers
             var items = await _apiClient.GetAllMenuItemsAsync();
             return View(items ?? new List<MenuItemVM>());
         }
+        public IActionResult Booking()
+        {
+            return View();
+        }
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
