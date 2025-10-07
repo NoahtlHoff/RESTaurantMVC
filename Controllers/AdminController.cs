@@ -140,6 +140,31 @@ namespace RESTaurantMVC.Controllers
             }
         }
 
+        [HttpGet("api/tables")]
+        public async Task<IActionResult> GetAllTablesApi()
+        {
+            try
+            {
+                var tables = await _apiClient.GetAllTablesAsync();
+                if (tables == null)
+                {
+                    _logger.LogWarning("GetAllTablesAsync returned null");
+                    return Ok(new List<TableVM>());
+                }
+
+                return Ok(tables);
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError(ex, "HTTP error when fetching tables from API");
+                return StatusCode(503, new { error = "API är inte tillgänglig", details = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error when fetching tables");
+                return StatusCode(500, new { error = "Ett oväntat fel uppstod", details = ex.Message });
+            }
+        }
         // ===== MENU =====
         [HttpGet("menu")]
         public async Task<IActionResult> Menu()

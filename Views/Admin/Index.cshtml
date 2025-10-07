@@ -25,7 +25,9 @@
                     <input type="tel" class="form-control" id="phone" placeholder="Telefonnummer">
                 </div>
                 <div class="col-md-3">
-                    <input type="text" class="form-control" id="table" placeholder="Bord">
+                    <select class="form-select" id="table" required>
+                        <option value="">Välj bord...</option>
+                    </select>
                 </div>
                 <div class="col-md-2">
                     <button type="submit" class="btn btn-success w-100">Spara</button>
@@ -33,13 +35,18 @@
             </div>
             <div class="row g-2">
                 <div class="col-md-3">
-                    <input type="date" class="form-control" id="date" required>
+                    <input type="date" class="form-control" id="date" required onchange="loadAvailableTables()">
                 </div>
                 <div class="col-md-2">
-                    <input type="time" class="form-control" id="time" required>
+                    <input type="time" class="form-control" id="time" required onchange="loadAvailableTables()">
                 </div>
                 <div class="col-md-2">
-                    <input type="number" class="form-control" id="size" placeholder="Antal" min="1" value="2" required>
+                    <input type="number" class="form-control" id="size" placeholder="Antal" min="1" value="2" required onchange="loadAvailableTables()">
+                </div>
+                <div class="col-md-5">
+                    <div class="alert alert-info mb-0 py-1 px-2 small" id="table-info">
+                        Välj datum, tid och antal för att se lediga bord
+                    </div>
                 </div>
             </div>
         </form>
@@ -82,9 +89,11 @@
     <script>
         let bookings = [];
         let currentWeekStart = new Date();
+        let allTables = [];
 
         document.addEventListener('DOMContentLoaded', () => {
             setDefaults();
+            loadAllTables();
             thisWeek();
         });
 
@@ -99,6 +108,83 @@
             document.getElementById('time').value = `${hour.toString().padStart(2, '0')}:00`;
 
             document.getElementById('size').value = 2;
+        }
+
+        async function loadAllTables() {
+            try {
+                const res = await fetch('/admin/api/tables');
+                if (res.ok) {
+                    allTables = await res.json();
+                }
+            } catch (error) {
+                console.error('Error loading tables:', error);
+            }
+        }
+
+        async function loadAvailableTables() {
+            const date = document.getElementById('date').value;
+            const time = document.getElementById('time').value;
+            const size = parseInt(document.getElementById('size').value) || 2;
+            const tableSelect = document.getElementById('table');
+            const tableInfo = document.getElementById('table-info');
+            const currentId = document.getElementById('id').value;
+
+            if (!date || !time) {
+                tableSelect.innerHTML = '<option value="">Välj datum och tid först...</option>';
+                tableInfo.innerHTML = 'Välj datum, tid och antal för att se lediga bord';
+                tableInfo.className = 'alert alert-info mb-0 py-1 px-2 small';
+                return;
+            }
+
+            try {
+                // Hitta bokningar för denna tid (2 timmars slots)
+                const selectedDateTime = new Date(`${date}T${time}`);
+                const slotStart = selectedDateTime;
+                const slotEnd = new Date(selectedDateTime.getTime() + 2 * 60 * 60 * 1000);
+
+                // Filtrera ut bokade bord (förutom nuvarande bokning om vi editerar)
+                const bookedTableIds = bookings
+                    .filter(b => {
+                        if (currentId && b.id == currentId) return false; // Skippa nuvarande bokning
+                        const bookingStart = new Date(`${b.date}T${b.time}`);
+                        const bookingEnd = new Date(bookingStart.getTime() + 2 * 60 * 60 * 1000);
+                        return (slotStart < bookingEnd && bookingStart < slotEnd);
+                    })
+                    .map(b => {
+                        // Hitta table id från tableName
+                        const table = allTables.find(t => t.number === b.tableName);
+                        return table?.id;
+                    })
+                    .filter(id => id != null);
+
+                // Filtrera tillgängliga bord
+                const availableTables = allTables.filter(t =>
+                    t.capacity >= size && !bookedTableIds.includes(t.id)
+                );
+
+                // Uppdatera dropdown
+                if (availableTables.length === 0) {
+                    tableSelect.innerHTML = '<option value="">Inga lediga bord</option>';
+                    tableInfo.innerHTML = `⚠️ Inga bord lediga för ${size} personer`;
+                    tableInfo.className = 'alert alert-warning mb-0 py-1 px-2 small';
+                } else {
+                    tableSelect.innerHTML = '<option value="">Välj bord...</option>';
+                    availableTables
+                        .sort((a, b) => a.number.localeCompare(b.number))
+                        .forEach(t => {
+                            const option = document.createElement('option');
+                            option.value = t.number;
+                            option.textContent = `${t.number} (${t.capacity} platser)`;
+                            tableSelect.appendChild(option);
+                        });
+                    tableInfo.innerHTML = `✅ ${availableTables.length} bord lediga för ${size} personer`;
+                    tableInfo.className = 'alert alert-success mb-0 py-1 px-2 small';
+                }
+            } catch (error) {
+                console.error('Error loading available tables:', error);
+                tableInfo.innerHTML = '❌ Kunde inte ladda bord';
+                tableInfo.className = 'alert alert-danger mb-0 py-1 px-2 small';
+            }
         }
 
         function showError(message) {
@@ -260,6 +346,9 @@
                 html += '</div>';
                 container.innerHTML = html;
 
+                // Ladda tillgängliga bord efter att bokningar laddats
+                loadAvailableTables();
+
             } catch (error) {
                 console.error('Error loading bookings:', error);
                 showError('Kunde inte ladda bokningar: ' + error.message);
@@ -281,7 +370,14 @@
             document.getElementById('time').value = b.time?.slice(0,5) || '';
             document.getElementById('size').value = b.partySize || 2;
             document.getElementById('phone').value = b.phone || '';
-            document.getElementById('table').value = b.tableName || '';
+
+            // Ladda tillgängliga bord först, sedan sätt värdet
+            loadAvailableTables().then(() => {
+                const tableSelect = document.getElementById('table');
+                if (b.tableName) {
+                    tableSelect.value = b.tableName;
+                }
+            });
 
             // Scroll to form
             document.getElementById('form').scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -317,6 +413,12 @@
                 tableName: document.getElementById('table').value,
                 phone: document.getElementById('phone').value
             };
+
+            // Validera att ett bord är valt
+            if (!bookingData.tableName) {
+                showError('Välj ett bord från listan');
+                return;
+            }
 
             try {
                 const res = await fetch(
