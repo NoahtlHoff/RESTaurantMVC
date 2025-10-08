@@ -53,7 +53,6 @@
 
         <div id="error-message" class="alert alert-danger d-none"></div>
 
-        <!-- Date selector and bookings grouped by date -->
         <div id="bookings-container">
             <div class="text-center py-4">
                 <div class="spinner-border" role="status">
@@ -137,32 +136,30 @@
             }
 
             try {
-                // Hitta bokningar för denna tid (2 timmars slots)
+
                 const selectedDateTime = new Date(`${date}T${time}`);
                 const slotStart = selectedDateTime;
                 const slotEnd = new Date(selectedDateTime.getTime() + 2 * 60 * 60 * 1000);
 
-                // Filtrera ut bokade bord (förutom nuvarande bokning om vi editerar)
+
                 const bookedTableIds = bookings
                     .filter(b => {
-                        if (currentId && b.id == currentId) return false; // Skippa nuvarande bokning
+                        if (currentId && b.id == currentId) return false; 
                         const bookingStart = new Date(`${b.date}T${b.time}`);
                         const bookingEnd = new Date(bookingStart.getTime() + 2 * 60 * 60 * 1000);
                         return (slotStart < bookingEnd && bookingStart < slotEnd);
                     })
                     .map(b => {
-                        // Hitta table id från tableName
+
                         const table = allTables.find(t => t.number === b.tableName);
                         return table?.id;
                     })
                     .filter(id => id != null);
 
-                // Filtrera tillgängliga bord
                 const availableTables = allTables.filter(t =>
                     t.capacity >= size && !bookedTableIds.includes(t.id)
                 );
 
-                // Uppdatera dropdown
                 if (availableTables.length === 0) {
                     tableSelect.innerHTML = '<option value="">Inga lediga bord</option>';
                     tableInfo.innerHTML = `⚠️ Inga bord lediga för ${size} personer`;
@@ -243,7 +240,6 @@
 
                 bookings = await res.json();
 
-                // Filter bookings for the current week
                 const weekEnd = new Date(currentWeekStart);
                 weekEnd.setDate(weekEnd.getDate() + 7);
 
@@ -252,7 +248,6 @@
                     return bookingDate >= currentWeekStart && bookingDate < weekEnd;
                 });
 
-                // Group bookings by date
                 const groupedByDate = {};
                 weekBookings.forEach(b => {
                     if (!groupedByDate[b.date]) {
@@ -261,7 +256,6 @@
                     groupedByDate[b.date].push(b);
                 });
 
-                // Sort each day's bookings by time
                 Object.keys(groupedByDate).forEach(date => {
                     groupedByDate[date].sort((a, b) => {
                         const timeA = a.time || '00:00';
@@ -270,7 +264,6 @@
                     });
                 });
 
-                // Generate days for the week
                 const days = [];
                 for (let i = 0; i < 7; i++) {
                     const date = new Date(currentWeekStart);
@@ -287,7 +280,6 @@
                     return;
                 }
 
-                // Create the HTML
                 let html = '<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 g-3">';
 
                 days.forEach(date => {
@@ -346,7 +338,6 @@
                 html += '</div>';
                 container.innerHTML = html;
 
-                // Ladda tillgängliga bord efter att bokningar laddats
                 loadAvailableTables();
 
             } catch (error) {
@@ -371,7 +362,6 @@
             document.getElementById('size').value = b.partySize || 2;
             document.getElementById('phone').value = b.phone || '';
 
-            // Ladda tillgängliga bord först, sedan sätt värdet
             loadAvailableTables().then(() => {
                 const tableSelect = document.getElementById('table');
                 if (b.tableName) {
@@ -379,7 +369,6 @@
                 }
             });
 
-            // Scroll to form
             document.getElementById('form').scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
 
@@ -414,7 +403,6 @@
                 phone: document.getElementById('phone').value
             };
 
-            // Validera att ett bord är valt
             if (!bookingData.tableName) {
                 showError('Välj ett bord från listan');
                 return;

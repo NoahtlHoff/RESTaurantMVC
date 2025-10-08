@@ -240,7 +240,6 @@ namespace RESTaurantMVC.Services.ApiClients
         {
             EnsureToken();
 
-            // 1. Skapa eller hitta kund
             int customerId;
             if (!string.IsNullOrWhiteSpace(booking.GuestName))
             {
@@ -255,7 +254,6 @@ namespace RESTaurantMVC.Services.ApiClients
                 customerId = 1;
             }
 
-            // 2. Hitta bord
             int tableId = 1;
             if (!string.IsNullOrWhiteSpace(booking.TableName))
             {

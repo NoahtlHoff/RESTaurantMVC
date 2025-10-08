@@ -21,9 +21,9 @@ body {
 .badge.bg-light {
     color: #212529;
 }
-/* Navbar styling */
+
 .navbar {
-    background-color: #1a3a5c !important; /* Mörkblå färg */
+    background-color: #1a3a5c !important;
     border-bottom: 3px solid #2c5f8d;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
@@ -32,7 +32,7 @@ body {
     white-space: normal;
     text-align: center;
     word-break: break-all;
-    color: #ffffff !important; /* Vit text */
+    color: #ffffff !important; 
     font-weight: 600;
     font-size: 1.5rem;
 }
@@ -41,22 +41,21 @@ body {
         color: #e0e0e0 !important;
     }
 
-/* Nav links */
+
 .navbar .nav-link {
-    color: #ffffff !important; /* Vit text */
+    color: #ffffff !important; 
     font-weight: 500;
     transition: color 0.3s ease;
 }
 
     .navbar .nav-link:hover {
-        color: #ff9f61 !important; /* Guldgul hover-färg */
+        color: #ff9f61 !important; 
     }
 
     .navbar .nav-link:focus {
         color: #ff9f61 !important;
     }
 
-/* Toggler button för mobil */
 .navbar-toggler {
     border-color: rgba(255, 255, 255, 0.3);
 }
@@ -76,7 +75,6 @@ body {
         color: #ff9f61 !important;
     }
 
-/* Footer styling */
 .footer {
     position: absolute;
     bottom: 0;
@@ -87,7 +85,6 @@ body {
     border-top: 1px solid #e5e5e5;
 }
 
-/* General link and button colors */
 a {
     color: #0077cc;
 }
